@@ -3,7 +3,7 @@
 # Purpose: Create interactive maps for Snake R. IPTDS prioritization and planning
 # 
 # Created: June 9, 2023
-#   Last Modified: April 22, 2024
+#   Last Modified: July 10, 2024
 # 
 # Notes: Much of this is based on a previous script iptds_planning.R from RK. This script produces the default leaflet
 #   plus HUC10s.
@@ -22,16 +22,16 @@ library(htmlwidgets)
 # -----------------------
 # COMPILE DATA
 # iptds data
-iptds = read_excel(here("docs/Snake River IPTDS Prioritization 20240417.xlsx"),
+iptds = read_excel(here("data/prioritization/Snake River IPTDS Prioritization 20240417.xlsx"),
                    sheet = "SR_IPTDS_Sites") %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
 
 # dabom mrr sites
-load(here("data/derived_data/spatial/dabom_mrr_sites.rda"))
+load(here("data/spatial/dabom_mrr_sites.rda"))
 
 # populations
-load(here("data/derived_data/spatial/SR_pops.rda"))
+load(here("data/spatial/SR_pops.rda"))
 rm(fall_pop)
 
 chnk_pops = spsm_pop %>%
@@ -41,7 +41,7 @@ sthd_pops = sth_pop %>%
   select(TRT_POPID, POP_NAME, MPG)
 
 # streams and steelhead major/minor spawning areas
-load(here("data/derived_data/spatial/steelhead_gis_data.rda"))
+load(here("data/spatial/steelhead_gis_data.rda"))
 streams = sthd_critical %>%
   st_transform("EPSG:4326")
 
@@ -49,11 +49,11 @@ sthd_spawn = sthd_spawn %>%
   st_transform("EPSG:4326") ; rm(sthd_critical, sthd_extant, sthd_ip)
 
 # chinook major/minor spawning areas
-chnk_spawn = readRDS(here("data/derived_data/spatial/spsm_spwn_areas.rds")) %>%
+chnk_spawn = readRDS(here("data/spatial/spsm_spwn_areas.rds")) %>%
   st_transform("EPSG:4326")
 
 # HUC 10s
-snake_huc10s = readRDS(here("data/derived_data/spatial/huc10.rds")) %>%
+snake_huc10s = readRDS(here("data/spatial/huc10.rds")) %>%
   st_transform(crs = 4326)
 
 # -----------------------
@@ -233,6 +233,6 @@ sr_iptds_leaflet = base %>%
 sr_iptds_leaflet
 
 # save leaflet
-saveWidget(sr_iptds_leaflet, file = here("shiny/leaflet/sr_iptds_leaflet_huc10s.html"))
+saveWidget(sr_iptds_leaflet, file = here("shiny/leaflet/sr_iptds_leaflet_w_huc10s.html"))
 
 ### END SCRIPT
