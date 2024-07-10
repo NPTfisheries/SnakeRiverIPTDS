@@ -4,7 +4,7 @@
 #   tag data for all Snake River sites from PTAGIS.
 # 
 # Created: May 6, 2024
-#   Last Modified: May 7, 2024
+#   Last Modified: July 10, 2024
 # 
 # Notes: 
 
@@ -63,8 +63,12 @@ iptds_ops = sr_iptds_meta %>%
          last_date) %>%
   mutate(first_date = as.Date(first_date),
          last_date = as.Date(last_date)) %>%
-  # BED doesn't have a first_date, grabbed from PTAGIS
-  mutate(first_date = if_else(site_code == "BED", as.Date("2024-02-15"), first_date)) 
+  # These sites don't have first_date and/or last_date; grabbed from PTAGIS
+  mutate(first_date = if_else(site_code == "BED", as.Date("2024-02-15"), first_date)) %>%
+  mutate(first_date = if_else(site_code == "UG3", as.Date("2024-07-09"), first_date)) %>%
+  mutate(last_date  = if_else(site_code == "UG3", as.Date(Sys.Date()),   last_date))  %>%
+  mutate(first_date = if_else(site_code == "UG4", as.Date("2024-07-09"), first_date)) %>%
+  mutate(last_date  = if_else(site_code == "UG4", as.Date(Sys.Date()),   last_date))
 
 # sequence of years that each site was in operation
 site_yrs = iptds_ops %>%
@@ -103,7 +107,7 @@ sr_sites_in_biologic = sr_iptds_meta %>%
 # Part 2: Virtual Test Tags
 
 # read in and combine virtual test tag data
-vtt_df = list.files(path = here("output/virtual_test_tags/"),
+vtt_df = list.files(path = here("data/virtual_test_tags/"),
                     pattern = "\\.rds$",
                     recursive = T,
                     full.names = T) %>%
@@ -253,7 +257,7 @@ for(a in arrays) {
   plot_list[[a]] = array_p
 }
 all_arrays_p = gridExtra::marrangeGrob(plot_list, nrow = 8, ncol = 1)
-ggsave(paste0(here("figures/array_vtt_summary.pdf")),
+ggsave(paste0(here("output/figures/virtual_test_tags/array_vtt_summary_"), Sys.Date(), ".pdf"),
        all_arrays_p,
        width = 8.5,
        height = 14,
@@ -262,6 +266,6 @@ ggsave(paste0(here("figures/array_vtt_summary.pdf")),
 # save iptds operations objects
 save(iptds_ops,
      vtt_summ,
-     file = here("output/iptds_operations_summaries.rda"))
+     file = paste0(here("output/virtual_test_tags/iptds_operations_summaries_"), Sys.Date(), ".rda"))
 
 ### END SCRIPT
