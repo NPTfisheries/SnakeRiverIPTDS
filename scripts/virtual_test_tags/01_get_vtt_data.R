@@ -115,7 +115,7 @@ for (s in sites) {
     
     # save the results, if they exist
     if (!is.null(vtt_df)) {
-      saveRDS(vtt_df, file.path(here("output/virtual_test_tags"), paste0(yr, "/", s, "_", yr, ".rds")))
+      saveRDS(vtt_df, file.path(here("data/virtual_test_tags"), paste0(yr, "/", s, "_", yr, ".rds")))
       print(paste0("Virtual test tag data saved for site ", s, ", year ", yr, "."))
     }
   }, error = function(e) {
