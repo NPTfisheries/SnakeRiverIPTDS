@@ -3,7 +3,7 @@
 # Purpose: Testing various PTAGIS API requests
 # 
 # Created: May 6, 2024
-#   Last Modified:
+#   Last Modified: July 10, 2024
 # 
 # Notes: 
 
@@ -15,7 +15,7 @@ library(tidyverse)
 library(here)
 
 # set PTAGIS API key
-api_key = read_table(here("ma_api_key.txt"), col_names = F) %>%
+api_key = read_table(here("keys/ma_ptagis_api_key.txt"), col_names = F) %>%
   as.character()
 
 # site and year of interest
