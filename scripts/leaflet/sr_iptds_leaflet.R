@@ -22,16 +22,16 @@ library(htmlwidgets)
 # -----------------------
 # COMPILE DATA
 # iptds data
-iptds = read_excel(here("docs/Snake River IPTDS Prioritization 20240417.xlsx"),
+iptds = read_excel(here("data/prioritization/Snake River IPTDS Prioritization 20240417.xlsx"),
                         sheet = "SR_IPTDS_Sites") %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
 
 # dabom mrr sites
-load(here("data/derived_data/spatial/dabom_mrr_sites.rda"))
+load(here("data/spatial/dabom_mrr_sites.rda"))
 
 # populations
-load(here("data/derived_data/spatial/SR_pops.rda"))
+load(here("data/spatial/SR_pops.rda"))
 rm(fall_pop)
 
 chnk_pops = spsm_pop %>%
@@ -41,7 +41,7 @@ sthd_pops = sth_pop %>%
   select(TRT_POPID, POP_NAME, MPG)
 
 # streams and steelhead major/minor spawning areas
-load(here("data/derived_data/spatial/steelhead_gis_data.rda"))
+load(here("data/spatial/steelhead_gis_data.rda"))
 streams = sthd_critical %>%
   st_transform("EPSG:4326")
 
@@ -49,7 +49,7 @@ sthd_spawn = sthd_spawn %>%
   st_transform("EPSG:4326") ; rm(sthd_critical, sthd_extant, sthd_ip)
 
 # chinook major/minor spawning areas
-chnk_spawn = readRDS(here("data/derived_data/spatial/spsm_spwn_areas.rds")) %>%
+chnk_spawn = readRDS(here("data/spatial/spsm_spwn_areas.rds")) %>%
   st_transform("EPSG:4326")
 
 # -----------------------
@@ -68,7 +68,7 @@ base = leaflet() %>%
   # base maps
   setView(lng = -115.5660, lat = 45.4000, zoom = 7.5) %>%
   addProviderTiles(providers$Esri.WorldTopoMap) %>%
-  addPolylines(data = sthd_streams, color = "blue", weight = 1)
+  addPolylines(data = streams, color = "blue", weight = 1)
   
 sr_iptds_leaflet = base %>%
   # chinook salmon populations
