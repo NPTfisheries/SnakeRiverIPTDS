@@ -1,0 +1,246 @@
+Attributes of Icb200ms_p.shp:    [49 fields]
+-------------------------------
+1) SHAPE:  Shape, Shapeline
+     [#FIELD_SHAPELINE; Precision = 9.0]
+
+2) NAME:  String, Char
+     [#FIELD_CHAR; Precision = 25.0]
+
+Unique segment identifier
+ 
+3) LLID:  String, Char
+     [#FIELD_CHAR; Precision = 25.0]
+
+water course longitude/latitude identifier number; derived unique water course route identifier from PNW Framework Hydrography (100k scale)
+ 
+4) STRMNAME:  String, Char
+     [#FIELD_CHAR; Precision = 55.0]
+
+common name of watercourse from the PNW Framework Hydrography (100k scale)
+ 
+5) LENGTH:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 12.3]
+
+segment length (m)
+ 
+6) ELEV:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+ 
+mean elevation of stream segment (m), calculated from USGS 10m DEM
+
+7) FLOWSTAT:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+Perennial or Intermittent flow type, from NHD
+ 
+8) CHINLABEL:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+Spring/Summer Chinook population code, from ICTRT
+ 
+9) CMAPNAME:  String, Char
+     [#FIELD_CHAR; Precision = 254.0]
+
+Spring/Summer Chinook population name, from ICTRT
+ 
+10) STHDLABEL:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+Summer/Winter Steelhead population code, from ICTRT
+ 
+11) SMAPNAME:  String, Char
+     [#FIELD_CHAR; Precision = 100.0]
+
+Summer/Winter Steelhead population name, from ICTRT
+ 
+12) WIDE_WW:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.1]
+
+modeled wetted width of stream (summer minimum) (m)
+ 
+13) WIDE_BF:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.1]
+
+modeled bankfull width of stream, (m)
+ 
+14) AREA_WW:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+ 
+modeled wetted area of stream, (m2)
+
+15) AREA_BF:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+modeled bankfull area of stream, (m2)
+ 
+16) GRADIENT:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.3]
+
+% gradient of stream segment, calculated from USGS DEM
+ 
+17) BF_FLD_RAT:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+ratio of bankfull width to valley width, version 1
+ 
+18) BF_FLD_RA2:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.2]
+ 
+ratio of bankfull width to valley width, version 2
+
+19) BF_FLD_RA3:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.2]
+
+ratio of bankfull width to valley width, version 3
+ 
+20) PER_FOR:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.3]
+
+% forest cover within 240m of stream segment, from NLCD 
+ 
+21) BLOCKTYPE:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+type of stream barrier, natural or anthropogenic; null means stream segment is not blocked
+ 
+22) BLOCKGRAD:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+natural barrier > 0, and is caculated from DEM
+ 
+23) BLOCKNATU:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+natural barrier is > 0, and is taken from literature or expert opinion
+ 
+24) MAXWATERB:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.2]
+
+maximum two week mean max stream temperature meets or exceeds 22c (modeled); 0=no, >0 = yes, -1 = no(observed value < 22c)
+ 
+25) INLAKE:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+stream segment contained within polygon defined as lake
+ 
+26) SEDIMENT:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+>0 = sedimentation potential is high based on soil type and stream gradient
+ 
+27) VELOCODE:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+low or high stream velocity, from NHD; value modifies intrinsic potential habitat quality (steelhead) based on observation of steelhead use and NHD calculated stream velocity
+ 
+28) RATECODEC:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+code describing habitat type, Spring/Summer Chinook
+ 
+29) RATECODES:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+code describing habitat type, Summer/Winter Steelhead
+ 
+30) STHDRATE:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+Steelhead IP habitat rating value; 0 = none/very low, 1 = low, 2 = moderate, 3 = high quality
+ 
+31) CHINRATE:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+Spring/Summer Chinook IP habitat rating value; 0 = none/very low, 1 = low, 2 = moderate, 3 = high quality
+ 
+32) WS_FACTOR:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.2]
+
+IP weighting factor calculated for bankfull stream area (steelhead)
+ 
+33) WC_FACTOR:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.2]
+
+IP weighting factor calculated for wetted stream area (Spring/Summer Chinook)
+ 
+34) AREA_WS:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+IP weighted stream area (steelhead) m2
+ 
+35) LENGTH_WS:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+IP weighted stream length (steelhead) m 
+
+36) AREA_WC:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+IP weighted stream area (Spring/Summer Chinook) m2
+ 
+37) LENGTH_WC:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+IP weighted stream length (Spring/Summer Chinook) m 
+ 
+38) CURRSUSH:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+if value > 0 = current summer steelhead spawning, from state agencies, streamnet, observation, and expert opinion
+ 
+39) CURRWISH:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+if value > 0 = current winter steelhead spawning, from state agencies, streamnet, observation, and expert opinion
+ 
+40) CURRSPCH:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+if value > 0 = current Spring Chinook spawning, from state agencies, streamnet, observation, and expert opinion
+ 
+41) CURRSUCH:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+if value > 0 = current Summer Chinook spawning, from state agencies, streamnet, observation, and expert opinion
+ 
+42) CHINREAR:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+if value > 0 = current Spring/Summer Chinook rearing only from Streamnet
+ 
+43) STHDREAR:  Number, Decimal
+     [#FIELD_DECIMAL; Precision = 16.0]
+
+if value > 0 = current Summer/Winter Steelhead rearing only from Streamnet
+ 
+44) MSA_S:  String, Char
+     [#FIELD_CHAR; Precision = 55.0]
+
+Major or Minor Spawning area name, steelhead
+ 
+45) MSA_C:  String, Char
+     [#FIELD_CHAR; Precision = 55.0]
+
+Major or minor Spawning area name, Spring/Summer Chinook
+ 
+46) BR_CHIN:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+1 = IP branched habitat, Spring/Summer Chinook
+ 
+47) BR_STHD:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+1 = IP branched habitat, steelhead
+ 
+48) AU_CHIN:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+assessment unit code, Spring/Summer Chinook
+ 
+49) AU_STHD:  String, Char
+     [#FIELD_CHAR; Precision = 16.0]
+
+assessment unit code, steelhead
+ 
+
