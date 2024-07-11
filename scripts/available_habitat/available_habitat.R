@@ -54,7 +54,18 @@ iptds_sf = sites_sf %>%
 #   filter(!str_detect(site_name, "Little Goose|Lower Granite|Lower Monumental"))
 
 # intrinsic potential layer
-ip_sf = readRDS(here("data/spatial/ip.rds"))
+ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
+  # potential habitat weights based on recommendations from Cooney and Holzer (2006) Appendix C
+  mutate(chnk_wt = case_when(CHINRATE == 3 ~ 1,
+                             CHINRATE == 2 ~ 0.5,
+                             CHINRATE == 1 ~ 0.25,
+                             TRUE ~ 0)) %>%
+  mutate(sthd_wt = case_when(STHDRATE == 3 ~ 1,
+                             STHDRATE == 2 ~ 0.5,
+                             STHDRATE == 1 ~ 0.25,
+                             TRUE ~ 0)) %>%
+  # remove stream reaches with "negligible" habitat
+  filter(!(chnk_wt == 0 & sthd_wt == 0))
 
 # plot the data
 ggplot() +
@@ -69,5 +80,10 @@ ggplot() +
           color = "red",
           size = 2) +
   theme_minimal()
+
+ggplot() +
+  geom_sf(data = flowlines,
+          color = "dodgerblue",
+          size = 1)
 
 ### END SCRIPT
