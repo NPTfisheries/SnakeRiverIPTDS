@@ -15,9 +15,10 @@ rm(list = ls())
 library(tidyverse)
 library(sf)
 library(here)
+library(janitor)
 
 # set default crs
-default_crs = st_crs(4326) # WGS 84
+default_crs = st_crs(32611) # WGS 84, UTM zone 11N
 
 #--------------------
 # load and prep data
@@ -25,9 +26,9 @@ default_crs = st_crs(4326) # WGS 84
 # ictrt population polygons
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 sthd_pops = sth_pop %>%
-  st_set_crs(default_crs) ; rm(sth_pop)
+  st_transform(default_crs) ; rm(sth_pop)
 chnk_pops = spsm_pop %>%
-  st_set_crs(default_crs) ; rm(spsm_pop)
+  st_transform(default_crs) ; rm(spsm_pop)
 
 # snake river iptds
 load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240304.rda")
@@ -58,6 +59,7 @@ iptds_sf = sites_sf %>%
 # intrinsic potential layer; already been clipped using snake river steelhead DPS
 ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
   clean_names() %>%
+  st_transform(default_crs) %>%
   # trim down to only useful columns
   select(name,
          llid,
@@ -119,6 +121,7 @@ ggplot() +
           size = 2) +
   theme_minimal()
 
+#--------------------
 # estimate available ip habitat within trt populations
 sthd_pop_ip = ip_sf %>%
   st_drop_geometry() %>%
@@ -147,6 +150,51 @@ chnk_pop_ip = ip_sf %>%
 pop_ip = bind_rows(sthd_pop_ip, chnk_pop_ip) %>%
   mutate(ip_length_p = ip_length_curr / ip_length_w,
          ip_area_p = ip_area_curr / ip_area_w) %>%
-  select(species, popid, everything())
+  select(species, popid, everything()) ; rm(sthd_pop_ip, chnk_pop_ip)
+
+#--------------------
+# create a seamless dem
+library(raster)
+
+# THIS ROUTE PROVIDED PROMISE; MOVE TO ANOTHER SCRIPT AND MAY NEED TO CONSIDER TRANSFORMING AND FILLING HOLES
+
+# load dem tiles
+dem_files = list.files("C:/Workspace/gis/10m_NED_DEMS", pattern = "*.tif", full.names = T)
+dem_list = lapply(dem_files, raster)
+m = do.call(merge, x)
+
+# Save the final DEM
+writeRaster(m, "C:/Workspace/gis/snake_river_10m_ned_dem.tif", overwrite = TRUE)
 
 ### END SCRIPT
+
+#--------------------
+# scrap code; looks cute, might delete later
+
+#--------------------
+# snap iptds to ip dataset
+# iptds_sf_snap = st_snap(iptds_sf, ip_sf, tolerance = 50)
+
+# dem_list = lapply(dem_files, rast)
+# unlist(dem_list)
+# 
+# m = mosaic(unlist(dem_list), fun = mean)
+# combined_extent = ext(do.call(c, lapply(dem_list, ext)))
+# 
+# extents = lapply(dem_list, ext)
+# 
+# # Reproject and resample to a common resolution
+# target_dem <- dem_list[[1]]
+# target_res <- res(target_dem)
+# 
+# dem_list <- lapply(dem_list, function(dem) {
+#   dem <- project(dem, crs(target_dem))
+#   resample(dem, target_dem)
+# })
+# 
+# # Merge DEM tiles using do.call
+# merged_dem <- do.call(mosaic, c(dem_list, fun = "mean"))
+# 
+# # Fill NoData values using focal
+# filled_dem <- focal(merged_dem, w = matrix(1, 3, 3), fun = mean, na.rm = TRUE)
+
