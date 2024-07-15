@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: 
+#   Last Modified: July 12, 2024
 # 
 # Notes:
 
@@ -152,19 +152,6 @@ pop_ip = bind_rows(sthd_pop_ip, chnk_pop_ip) %>%
          ip_area_p = ip_area_curr / ip_area_w) %>%
   select(species, popid, everything()) ; rm(sthd_pop_ip, chnk_pop_ip)
 
-#--------------------
-# create a seamless dem
-library(raster)
-
-# THIS ROUTE PROVIDED PROMISE; MOVE TO ANOTHER SCRIPT AND MAY NEED TO CONSIDER TRANSFORMING AND FILLING HOLES
-
-# load dem tiles
-dem_files = list.files("C:/Workspace/gis/10m_NED_DEMS", pattern = "*.tif", full.names = T)
-dem_list = lapply(dem_files, raster)
-m = do.call(merge, x)
-
-# Save the final DEM
-writeRaster(m, "C:/Workspace/gis/snake_river_10m_ned_dem.tif", overwrite = TRUE)
 
 ### END SCRIPT
 
