@@ -49,15 +49,10 @@ sthd_pops = sth_pop %>%
 chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
-# join ictrt populations to iptds
+# join ictrt populations to iptds (just using sthd for now)
 iptds_sf = iptds_sf %>%
   st_join(sthd_pops %>%
-            select(pop = TRT_POPID)) #%>%
-  # st_join(chnk_pops %>%
-  #           select(chnk = TRT_POPID)) %>%
-  # pivot_longer(cols = c("sthd", "chnk"),
-  #              names_to = "species",
-  #              values_to = "pop")
+            select(pop = TRT_POPID)) 
 
 # read in DEM
 snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
@@ -131,7 +126,6 @@ for (s in 1:nrow(iptds_sf)) {
     filter(site_code == site$site_code) %>%
     select(geometry) %>%
     distinct() %>%
-    #st_as_sfc() %>%
     # convert the sf point to a SpatialPoints object
     as("Spatial")
   
