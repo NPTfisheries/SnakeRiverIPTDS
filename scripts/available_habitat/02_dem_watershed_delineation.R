@@ -18,6 +18,7 @@ library(here)
 library(raster)
 #install.packages("whitebox", repos="http://R-Forge.R-project.org")
 library(whitebox)
+library(stars)
 
 # set some defaults
 ws_dir = "C:/Workspace/gis/10m_NED_DEMs/" # file path to spatial data
@@ -51,12 +52,12 @@ chnk_pops = spsm_pop %>%
 # join ictrt populations to iptds
 iptds_sf = iptds_sf %>%
   st_join(sthd_pops %>%
-            select(sthd = TRT_POPID)) %>%
-  st_join(chnk_pops %>%
-            select(chnk = TRT_POPID)) %>%
-  pivot_longer(cols = c("sthd", "chnk"),
-               names_to = "species",
-               values_to = "pop")
+            select(pop = TRT_POPID)) #%>%
+  # st_join(chnk_pops %>%
+  #           select(chnk = TRT_POPID)) %>%
+  # pivot_longer(cols = c("sthd", "chnk"),
+  #              names_to = "species",
+  #              values_to = "pop")
 
 # read in DEM
 snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
@@ -68,69 +69,96 @@ for (s in 1:nrow(iptds_sf)) {
   # grab the site and population
   site = iptds_sf[s,] %>% st_drop_geometry()
   pop = site$pop
-  
-  # get the population polygon
-  if(site$species == "sthd") {
+
+  # more information here: https://vt-hydroinformatics.github.io/rgeoraster.html#prepare-dem-for-hydrology-analyses
+
+  # check to see if the raster streams for a population polygon already exists; if not, run loop
+  if(file.exists(paste0("C:/Workspace/gis/10m_NED_DEMs/raster_streams/", pop, ".tif"))) {
+    
+    # if the file exists, print a message and skip the loop
+    cat(paste0("The raster streams file for population ", pop, " already exists. Skipping the loop.\n"))
+    
+  } else {
+    
+    # if the file does not exist, perform the watershed delineation, etc.
+    cat(paste0("The raster streams file for population ", pop, " does not exist. Running the loop.\n"))
+    
+    # get the population polygon
     poly = sthd_pops %>%
       filter(TRT_POPID == pop) %>%
       select(pop = TRT_POPID)
-  }
-  if(site$species == "chnk") {
-    poly = chnk_pops %>%
-      filter(TRT_POPID == pop) %>%
-      select(pop = TRT_POPID)
-  }
-  
-  # clip DEM using the population polygon
-  pop_dem = crop(snake_dem, poly)
-  
-  # write population dem
-  writeRaster(pop_dem, paste0("C:/Workspace/gis/10m_NED_DEMs/pop_dems/", pop, ".tif"), overwrite = TRUE)
-  
-  
-  
-}
+    
+    # clip DEM using the population polygon
+    pop_dem = crop(snake_dem, poly)
+    
+    # write population dem
+    writeRaster(pop_dem, paste0("C:/Workspace/gis/10m_NED_DEMs/pop_dems/", pop, ".tif"), overwrite = TRUE)
+    
+    # breach depressions
+    wbt_breach_depressions_least_cost(
+      dem = paste0("C:/Workspace/gis/10m_NED_DEMs/pop_dems/", pop, ".tif"),
+      output = paste0("C:/Workspace/gis/10m_NED_DEMs/pop_dems_breached/", pop, ".tif"),
+      dist = 5,
+      fill = TRUE
+    )
+    
+    # fill depressions
+    wbt_fill_depressions_wang_and_liu(
+      dem = paste0("C:/Workspace/gis/10m_NED_DEMs/pop_dems_breached/", pop, ".tif"),
+      output = paste0("C:/Workspace/gis/10m_NED_DEMs/pop_dems_breached_filled/", pop, ".tif")
+    )
+    
+    # create D8 flow accumulation
+    wbt_d8_flow_accumulation(
+      input = paste0("C:/Workspace/gis/10m_NED_DEMs/pop_dems_breached_filled/", pop, ".tif"),
+      output = paste0("C:/Workspace/gis/10m_NED_DEMs/d8fa/", pop, ".tif")
+    )
+    
+    # create D8 pointer file
+    wbt_d8_pointer(dem = paste0("C:/Workspace/gis/10m_NED_DEMs/pop_dems_breached_filled/", pop, ".tif"),
+                   output = paste0("C:/Workspace/gis/10m_NED_DEMs/d8pointer/", pop, ".tif"))
+    
+    # extract streams
+    wbt_extract_streams(
+      flow_accum = paste0("C:/Workspace/gis/10m_NED_DEMs/d8fa/", pop, ".tif"),
+      output = paste0("C:/Workspace/gis/10m_NED_DEMs/raster_streams/", pop, ".tif"),
+      threshold = 6000
+    )
+  } # end breach and fill depressions, create D8 flow accumulation and pointer files, extract streams loop
 
-library(stars)
-ggplot() +
-  geom_stars(tmp) +
-  scale_fill_viridis_c() +
-  geom_sf(poly, fill = "transparent")
+  # set pour point
+  pp = iptds_sf %>%
+    filter(site_code == site$site_code) %>%
+    select(geometry) %>%
+    distinct() %>%
+    #st_as_sfc() %>%
+    # convert the sf point to a SpatialPoints object
+    as("Spatial")
+  
+  # create shapefile of pour point
+  #pp_sp = SpatialPoints(pp, proj4string = CRS("EPSG:32611"))
+  raster::shapefile(pp, filename = paste0("C:/Workspace/gis/10m_NED_DEMs/pour_points/", site$site_code, ".shp"), overwrite = TRUE)
+
+  # snap pour points to raster stream
+  wbt_jenson_snap_pour_points(pour_pts = paste0("C:/Workspace/gis/10m_NED_DEMs/pour_points/", site$site_code, ".shp"),
+                              streams = paste0("C:/Workspace/gis/10m_NED_DEMs/raster_streams/", pop, ".tif"),
+                              output = paste0("C:/Workspace/gis/10m_NED_DEMs/snapped_pour_points/", site$site_code, ".shp"),
+                              snap_dist = 50)
+  
+  # delineate watershed
+  wbt_watershed(d8_pntr = paste0("C:/Workspace/gis/10m_NED_DEMs/d8pointer/", pop, ".tif"),
+                pour_pts = paste0("C:/Workspace/gis/10m_NED_DEMs/snapped_pour_points/", site$site_code, ".shp"),
+                output = paste0("C:/Workspace/gis/10m_NED_DEMs/watershed_rasters/", pop, ".tif"))
+  
+  # convert watershed from raster to vector
+  ws_raster = raster(paste0("C:/Workspace/gis/10m_NED_DEMs/watershed_rasters/", pop, ".tif"))
+  ws_vector = st_as_stars(ws_raster) %>%
+    st_as_sf(merge = T)
+  
+  # write vector watershed
+  save(ws_vector, file = paste0(here("output/iptds_polygons"), "/", site$site_code, ".rda"))
+  st_write(ws_vector, paste0("C:/Workspace/gis/10m_NED_DEMs/watershed_polygons/", site$site_code, ".shp"), append = FALSE)
+  
+} # end loop over sites
 
 ### END SCRIPT
-
-# load necessary packages
-library(sf)
-library(raster)
-library(tmap)
-#install.packages("whitebox", repos="http://R-Forge.R-project.org")
-library(whitebox)
-
-# set some defaults
-ws_dir = "C:/Workspace/gis/10m_NED_DEMs/" # file path to spatial data
-#default_crs = st_crs(32611)               # set default crs to WGS 84, UTM zone 11N
-
-# read in DEM
-snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
-
-# set tmap mode to interactive viewing
-#tmap_mode("view")
-
-# set values below 1500 to NA since they are artifacts around the edges
-#snake_dem[snake_dem < 1500] = NA # it's unclear whether this is necessary
-
-# plot dem to be sure everything is ok
-# tm_shape(snake_dem) +
-#   tm_raster(style = "cont", palette = "PuOr", legend.show = T) +
-#   tm_scale_bar()
-
-#------------------------------------
-# prepare dem for hydrology analyses
-
-# breach depressions
-wbt_breach_depressions_least_cost(
-  dem = paste0(ws_dir, "snake_river_10m_ned_dem.tif"),
-  output = paste0(ws_dir, "snake_river_dem_breached.tif"),
-  dist = 5,
-  fill = TRUE
-)
