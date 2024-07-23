@@ -157,7 +157,7 @@ for (s in 1:nrow(iptds_sf)) {
   
   # write vector watershed
   save(ws_vector, file = paste0(here("output/iptds_polygons"), "/", site$site_code, ".rda"))
-  st_write(ws_vector, paste0("C:/Workspace/gis/10m_NED_DEMs/watershed_polygons/", site$site_code, ".shp"), append = FALSE)
+  st_write(ws_vector, paste0("C:/Workspace/gis/10m_NED_DEMs/watershed_polygons/", site$site_code, ".shp"), quiet = TRUE, append = FALSE)
   
 } # end loop over sites
 
