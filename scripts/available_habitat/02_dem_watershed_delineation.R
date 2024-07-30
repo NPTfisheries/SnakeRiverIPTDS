@@ -63,7 +63,44 @@ for (s in 1:nrow(iptds_sf)) {
   # grab the site and population
   site = iptds_sf[s,] %>% st_drop_geometry()
   pop = site$pop
-
+  
+  # get the population polygon
+  poly = sthd_pops %>%
+    filter(TRT_POPID == pop) %>%
+    select(pop = TRT_POPID)
+  
+  # accommodate sites that cover multiple populations
+  if(site$site_code %in% c("SC1", "SC2")) {
+    poly = sthd_pops %>%
+      filter(TRT_POPID %in% c("CRLMA-s", "CRSFC-s")) %>%
+      select(pop = TRT_POPID) %>%
+      summarise(
+        pop = paste(pop, collapse = "_"),
+        geometry = st_union(geometry)
+      )
+    pop = poly$pop
+  }
+  if(site$site_code == "SFG") {
+    poly = sthd_pops %>%
+      filter(TRT_POPID %in% c("SFMAI-s", "SFSEC-s")) %>%
+      select(pop = TRT_POPID) %>%
+      summarise(
+        pop = paste(pop, collapse = "_"),
+        geometry = st_union(geometry)
+      )
+    pop = poly$pop
+  }
+  if(site$site_code %in% c("USE", "USI")) {
+    poly = sthd_pops %>%
+      filter(TRT_POPID %in% c("SRPAH-s", "SREFS-s", "SRUMA-s")) %>%
+      select(pop = TRT_POPID) %>%
+      summarise(
+        pop = paste(pop, collapse = "_"),
+        geometry = st_union(geometry)
+      )
+    pop = poly$pop
+  }
+  
   # more information here: https://vt-hydroinformatics.github.io/rgeoraster.html#prepare-dem-for-hydrology-analyses
 
   # check to see if the raster streams for a population polygon already exists; if not, run loop
@@ -76,12 +113,7 @@ for (s in 1:nrow(iptds_sf)) {
     
     # if the file does not exist, perform the watershed delineation, etc.
     cat(paste0("The raster streams file for population ", pop, " does not exist. Running the loop.\n"))
-    
-    # get the population polygon
-    poly = sthd_pops %>%
-      filter(TRT_POPID == pop) %>%
-      select(pop = TRT_POPID)
-    
+   
     # clip DEM using the population polygon
     pop_dem = crop(snake_dem, poly)
     
