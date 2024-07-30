@@ -129,14 +129,13 @@ for (s in 1:nrow(iptds_sf)) {
     as("Spatial")
   
   # create shapefile of pour point
-  #pp_sp = SpatialPoints(pp, proj4string = CRS("EPSG:32611"))
   raster::shapefile(pp, filename = paste0(ws_dir, "pour_points/", site$site_code, ".shp"), overwrite = TRUE)
 
   # snap pour points to raster stream
   wbt_jenson_snap_pour_points(pour_pts = paste0(ws_dir, "pour_points/", site$site_code, ".shp"),
                               streams = paste0(ws_dir, "raster_streams/", pop, ".tif"),
                               output = paste0(ws_dir, "snapped_pour_points/", site$site_code, ".shp"),
-                              snap_dist = 50)
+                              snap_dist = 100)
   
   # delineate watershed
   wbt_watershed(d8_pntr = paste0(ws_dir, "d8pointer/", pop, ".tif"),
