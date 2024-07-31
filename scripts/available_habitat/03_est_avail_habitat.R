@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: July 12, 2024
+#   Last Modified: July 31, 2024
 # 
 # Notes:
 
@@ -41,22 +41,15 @@ iptds_sf = sites_sf %>%
   filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>% 
   # grab only INT sites
   filter(site_type == "INT") %>%
-  select(site_code, site_name) %>%
+  dplyr::select(site_code) %>%
   # transform to WGS84
-  st_transform(default_crs)
+  st_transform(default_crs) %>%
+  # join ictrt populations to iptds (just using sthd for now)
+  st_join(sthd_pops %>%
+            dplyr::select(pop = TRT_POPID)) %>%
+  arrange(site_code)
 
-# iptds_sf = sites_sf %>%
-#   # tranform to WGS84
-#   
-#   # trim down to sites within the Snake River steelhead DPS
-#   st_join(sthd_pops) %>%
-#   filter(!is.na(TRT_POPID)) %>%
-#   # grab only INT sites
-#   filter(site_type == "INT") %>%
-#   # remove a few dam sites
-#   filter(!str_detect(site_name, "Little Goose|Lower Granite|Lower Monumental"))
-
-# intrinsic potential layer; already been clipped using snake river steelhead DPS
+# prep intrinsic potential layer; already been clipped using snake river steelhead DPS
 ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
   clean_names() %>%
   st_transform(default_crs) %>%
@@ -98,19 +91,56 @@ ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
   # move geometry to the end
   select(everything(), geometry) %>%
   # finally, remove stream reaches with "negligible" habitat
-  filter(!(chnk_wt == 0 & sthd_wt == 0)) %>%
+  filter(!(chnk_wt == 0 & sthd_wt == 0)) #%>%
   # join mpg and trt population names 
-  st_join(sthd_pops %>%
-            select(sthd_mpg = MPG,
-                   sthd_popid = TRT_POPID)) %>%
-  st_join(chnk_pops %>%
-            select(chnk_mpg = MPG,
-                   chnk_popid = TRT_POPID))
+  # st_join(sthd_pops %>%
+  #           select(sthd_mpg = MPG,
+  #                  sthd_popid = TRT_POPID)) %>%
+  # st_join(chnk_pops %>%
+  #           select(chnk_mpg = MPG,
+  #                  chnk_popid = TRT_POPID))
   
-# plot the data
+# plot the intrinsic potential data
 ggplot() +
   geom_sf(data = ip_sf,
           color = "dodgerblue",
+          size = 1) +
+  geom_sf(data = sthd_pops,
+          fill = "gray90",
+          color = "black",
+          alpha = 0.5) +
+  geom_sf(data = iptds_sf, 
+          color = "red",
+          size = 2) +
+  theme_minimal()
+
+# prep the qrf data
+qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_redds.gpkg") %>%
+  clean_names() %>%
+  st_transform(default_crs) %>%
+  select(unique_id,
+         gnis_name,
+         reach_leng_m = reach_leng,
+         chnk,
+         sthd,
+         chnk_per_m,
+         chnk_per_m_se,
+         sthd_per_m,
+         sthd_per_m_se) %>%
+  # keep only reaches used by either sp/sum chinook or steelhead (according to StreamNet)
+  filter(chnk == TRUE | sthd == TRUE) %>%
+  # trim the qrf data to the extent of snake river steelhead populations
+  st_intersection(sthd_pops %>%
+                    st_union() %>%
+                    nngeo::st_remove_holes())
+
+# save the prepped qrf dataset
+save(qrf_sf, file = here("data/spatial/snake_redd_qrf.rda"))
+
+# plot the qrf data
+ggplot() +
+  geom_sf(data = qrf_sf,
+          color = "springgreen",
           size = 1) +
   geom_sf(data = sthd_pops,
           fill = "gray90",
