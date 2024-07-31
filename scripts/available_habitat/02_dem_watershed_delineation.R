@@ -45,12 +45,12 @@ iptds_sf = sites_sf %>%
   filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>% 
   # grab only INT sites
   filter(site_type == "INT") %>%
-  select(site_code) %>%
+  dplyr::select(site_code) %>%
   # transform to WGS84
   st_transform(default_crs) %>%
   # join ictrt populations to iptds (just using sthd for now)
   st_join(sthd_pops %>%
-            select(pop = TRT_POPID)) %>%
+            dplyr::select(pop = TRT_POPID)) %>%
   arrange(site_code)
 
 # read in prepped DEM
@@ -67,13 +67,13 @@ for (s in 1:nrow(iptds_sf)) {
   # get the population polygon
   poly = sthd_pops %>%
     filter(TRT_POPID == pop) %>%
-    select(pop = TRT_POPID)
+    dplyr::select(pop = TRT_POPID)
   
   # accommodate sites that cover multiple populations
   if(site$site_code %in% c("SC1", "SC2")) {
     poly = sthd_pops %>%
       filter(TRT_POPID %in% c("CRLMA-s", "CRSFC-s")) %>%
-      select(pop = TRT_POPID) %>%
+      dplyr::select(pop = TRT_POPID) %>%
       summarise(
         pop = paste(pop, collapse = "_"),
         geometry = st_union(geometry)
@@ -83,7 +83,7 @@ for (s in 1:nrow(iptds_sf)) {
   if(site$site_code == "SFG") {
     poly = sthd_pops %>%
       filter(TRT_POPID %in% c("SFMAI-s", "SFSEC-s")) %>%
-      select(pop = TRT_POPID) %>%
+      dplyr::select(pop = TRT_POPID) %>%
       summarise(
         pop = paste(pop, collapse = "_"),
         geometry = st_union(geometry)
@@ -93,7 +93,7 @@ for (s in 1:nrow(iptds_sf)) {
   if(site$site_code %in% c("USE", "USI")) {
     poly = sthd_pops %>%
       filter(TRT_POPID %in% c("SRPAH-s", "SREFS-s", "SRUMA-s")) %>%
-      select(pop = TRT_POPID) %>%
+      dplyr::select(pop = TRT_POPID) %>%
       summarise(
         pop = paste(pop, collapse = "_"),
         geometry = st_union(geometry)
@@ -155,10 +155,32 @@ for (s in 1:nrow(iptds_sf)) {
   # set pour point
   pp = iptds_sf %>%
     filter(site_code == site$site_code) %>%
-    select(geometry) %>%
+    dplyr::select(geometry) %>%
     distinct() %>%
     # convert the sf point to a SpatialPoints object
     as("Spatial")
+ 
+  # fix the pour point for some remaining sites that are too far from the raster streams
+  loc = pp@coords # initially, set loc equal to coordinates of pp
+  if(site$site_code == "AGC") { loc = c(765062, 4983410) }
+  if(site$site_code == "BHC") { loc = c(755989, 5000575) }
+  if(site$site_code == "BTL") { loc = c(787510, 4955448) }
+  if(site$site_code == "CCW") { loc = c(434932, 5004593) }
+  if(site$site_code == "ESS") { loc = c(615717, 4979148) }
+  if(site$site_code == "HEC") { loc = c(792429, 4952633) }
+  if(site$site_code == "HYC") { loc = c(765989, 4973079) }
+  if(site$site_code == "RFL") { loc = c(667607, 4892278) }
+  if(site$site_code == "USI") { loc = c(739787, 4975157) }
+  if(site$site_code == "VC1") { loc = c(664480, 4898268) }
+  if(site$site_code == "WB1") { loc = c(554055, 5067449) }
+
+  # if loc != coordinates of pp, update coordinates
+  if(any(loc == coordinates(pp)) == FALSE) {
+    centroid = colMeans(coordinates(pp))
+    translation_vector = loc - centroid
+    pp@coords = coordinates(pp) + matrix(rep(translation_vector, nrow(coordinates(pp))), nrow = nrow(coordinates(pp)), byrow = TRUE)
+    #pp@bbox = bbox(pp)
+  }
   
   # create shapefile of pour point
   raster::shapefile(pp, filename = paste0(ws_dir, "pour_points/", site$site_code, ".shp"), overwrite = TRUE)
