@@ -64,6 +64,8 @@ for (s in 1:nrow(iptds_sf)) {
   site = iptds_sf[s,] %>% st_drop_geometry()
   pop = site$pop
   
+  cat(paste0("Creating the watershed polygon for site ", site$site_code, ".\n"))
+  
   # get the population polygon
   poly = sthd_pops %>%
     filter(TRT_POPID == pop) %>%
