@@ -203,9 +203,12 @@ for (s in 1:nrow(iptds_sf)) {
   ws_vector = st_as_stars(ws_raster) %>%
     st_as_sf(merge = T)
   
+  # finally, clip the extent of the watershed polygon using the population polygon in the rare case (e.g., USE) that it extends beyond  
+  ws_vector_clip = st_intersection(ws_vector, poly)
+  
   # write vector watershed
-  save(ws_vector, file = paste0(here("output/iptds_polygons"), "/", site$site_code, ".rda"))
-  st_write(ws_vector, paste0(ws_dir, "watershed_polygons/", site$site_code, ".shp"), quiet = TRUE, append = FALSE)
+  save(ws_vector_clip, file = paste0(here("output/iptds_polygons"), "/", site$site_code, ".rda"))
+  st_write(ws_vector_clip, paste0(ws_dir, "watershed_polygons/", site$site_code, ".shp"), quiet = TRUE, append = FALSE)
   
 } # end loop over sites
 
