@@ -58,7 +58,8 @@ snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
 
 #--------------------
 # begin loop
-for (s in 1:nrow(iptds_sf)) {
+#for (s in 1:nrow(iptds_sf)) {
+for (s in 3) {
   
   # grab the site and population
   site = iptds_sf[s,] %>% st_drop_geometry()
@@ -165,6 +166,7 @@ for (s in 1:nrow(iptds_sf)) {
   # fix the pour point for some remaining sites that are too far from the raster streams
   loc = pp@coords # initially, set loc equal to coordinates of pp
   if(site$site_code == "AGC") { loc = c(765062, 4983410) }
+  if(site$site_code == "AFC") { loc = c(477479, 5124384) }
   if(site$site_code == "BHC") { loc = c(755989, 5000575) }
   if(site$site_code == "BTL") { loc = c(787510, 4955448) }
   if(site$site_code == "CCW") { loc = c(434932, 5004593) }
