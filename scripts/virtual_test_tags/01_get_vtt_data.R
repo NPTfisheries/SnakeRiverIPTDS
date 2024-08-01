@@ -17,7 +17,7 @@ library(PITcleanr)
 library(janitor)
 library(here)
 
-# query interrogation site metadata
+# query all interrogation site metadata
 iptds_meta = queryInterrogationMeta() %>%
   clean_names()
 
@@ -37,6 +37,7 @@ sr_iptds_meta = iptds_meta %>%
          first_date,
          last_date,
          last_file_opened_on,
+         last_file_closed_on,
          operation_period,
          operations_organization_code,
          rkm,
@@ -48,7 +49,7 @@ sr_iptds_meta = iptds_meta %>%
 iptds_ops = sr_iptds_meta %>%
   # get the latest date for each site
   group_by(site_code) %>%
-  mutate(last_date = max(last_date, last_file_opened_on, na.rm = T)) %>%
+  mutate(last_date = max(last_date, last_file_opened_on, last_file_closed_on, na.rm = T)) %>%
   ungroup() %>%
   select(site_code,
          active,
@@ -61,10 +62,10 @@ iptds_ops = sr_iptds_meta %>%
          last_date = as.Date(last_date)) %>%
   # These sites don't have first_date and/or last_date; grabbed from PTAGIS
   mutate(first_date = if_else(site_code == "BED", as.Date("2024-02-15"), first_date)) %>%
-  mutate(first_date = if_else(site_code == "UG3", as.Date("2024-07-09"), first_date)) %>%
+  mutate(first_date = if_else(site_code == "UG3", as.Date("2024-05-23"), first_date)) %>%
   mutate(last_date  = if_else(site_code == "UG3", as.Date(Sys.Date()),   last_date))  %>%
-  mutate(first_date = if_else(site_code == "UG4", as.Date("2024-07-09"), first_date)) %>%
-  mutate(last_date  = if_else(site_code == "UG4", as.Date(Sys.Date()),   last_date))
+  mutate(first_date = if_else(site_code == "UG4", as.Date("2024-05-23"), first_date)) %>%
+  mutate(first_date = if_else(site_code == "COU", as.Date("2024-02-28"), first_date))
 
 # sequence of years that each site was in operation
 site_yrs = iptds_ops %>%
