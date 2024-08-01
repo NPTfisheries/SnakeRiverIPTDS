@@ -24,7 +24,7 @@ library(fisheR)
 # load iptds operational dates data frame
 load(here("output/iptds_operations/iptds_operations_dates.rda"))
 
-# THIS CODE CHUNK MAY ALSO BE ABLE TO BE MOVED TO 01 SCRIPT
+# THIS CODE CHUNK MAY ALSO BE ABLE TO BE MOVED TO 01 SCRIPT???
 # summarize the years and days that each iptds was installed per year
 iptds_ops %<>%
   left_join(site_yrs, by = "site_code") %>%
@@ -43,6 +43,7 @@ iptds_ops %<>%
          last_date,
          everything()) ; rm(site_yrs)
 
+# CAN THIS CODE CHUNK ALSO BE MOVED TO 01 SCRIPT???
 # which iptds sites are in biologic?
 source(here("keys/biologic_login.txt"))
 biologic_login(email, password)
