@@ -65,6 +65,7 @@ ggplot() +
   geom_sf(data = iptds_sf, 
           color = "red",
           size = 2) +
+  labs(title = "Intrinsic Potential with IPTDS and Steelhead Populations") +
   theme_minimal()
 
 # plot the qrf data
@@ -79,6 +80,7 @@ ggplot() +
   geom_sf(data = iptds_sf, 
           color = "red",
           size = 2) +
+  labs(title = "Redd QRF with IPTDS and Steelhead Populations") +
   theme_minimal()
 
 #--------------------
@@ -114,34 +116,3 @@ pop_ip = bind_rows(sthd_pop_ip, chnk_pop_ip) %>%
 
 
 ### END SCRIPT
-
-#--------------------
-# scrap code; looks cute, might delete later
-
-#--------------------
-# snap iptds to ip dataset
-# iptds_sf_snap = st_snap(iptds_sf, ip_sf, tolerance = 50)
-
-# dem_list = lapply(dem_files, rast)
-# unlist(dem_list)
-# 
-# m = mosaic(unlist(dem_list), fun = mean)
-# combined_extent = ext(do.call(c, lapply(dem_list, ext)))
-# 
-# extents = lapply(dem_list, ext)
-# 
-# # Reproject and resample to a common resolution
-# target_dem <- dem_list[[1]]
-# target_res <- res(target_dem)
-# 
-# dem_list <- lapply(dem_list, function(dem) {
-#   dem <- project(dem, crs(target_dem))
-#   resample(dem, target_dem)
-# })
-# 
-# # Merge DEM tiles using do.call
-# merged_dem <- do.call(mosaic, c(dem_list, fun = "mean"))
-# 
-# # Fill NoData values using focal
-# filled_dem <- focal(merged_dem, w = matrix(1, 3, 3), fun = mean, na.rm = TRUE)
-
