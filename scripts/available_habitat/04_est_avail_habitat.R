@@ -200,6 +200,106 @@ pop_qrf = qrf_sf %>%
   select(species, pop, everything())
 
 # join population ip and qrf results
+pop_avail_hab = left_join(pop_ip, pop_qrf, by = c("species", "pop"))
 
+#--------------------
+# join and summarize site and population available habitat
+avail_hab_summ = iptds_sf %>%
+  select(site_code) %>%
+  left_join(site_avail_hab, by = "site_code") %>%
+  select(site_code,
+         chnk_ip_length_w,
+         chnk_ip_length_curr,
+         chnk_qrf_n,
+         sthd_ip_length_w,
+         sthd_ip_length_curr,
+         sthd_qrf_n) %>%
+  # join trt population names for each site
+  st_join(chnk_pops %>%
+            select(chnk_pop = TRT_POPID)) %>%
+  st_join(sthd_pops %>%
+            select(sthd_pop = TRT_POPID)) %>% ### I NEED TO COME BACK AND FIX THE POPULATIONS FOR SELECT SITES
+  st_drop_geometry() %>%
+  # fix chinook population assignments for some sites
+  mutate(chnk_pop = case_when(
+    site_code %in% c("SC1", "SC2") ~ "SCUMA",
+    # note that UGR monitors both GRUMA and GRCAT
+    site_code == "UGR" ~ "GRUMA",
+    TRUE ~ chnk_pop
+  )) %>%
+  # fix steelhead population assignments for some sites
+  mutate(sthd_pop = case_when(
+    site_code %in% c("SC1", "SC2") ~ "CRSFC-s",
+    TRUE ~ sthd_pop
+  )) %>%
+  # join available habitat for chinook populations
+  left_join(pop_avail_hab %>%
+              select(pop,
+                     chnk_pop_ip_length_w = ip_length_w,
+                     chnk_pop_ip_length_curr = ip_length_curr,
+                     chnk_pop_qrf_n = qrf_n),
+            by = c("chnk_pop" = "pop")) %>%
+  # join available habitat for steelhead populations
+  left_join(pop_avail_hab %>%
+              select(pop,
+                     sthd_pop_ip_length_w = ip_length_w,
+                     sthd_pop_ip_length_curr = ip_length_curr,
+                     sthd_pop_qrf_n = qrf_n),
+            by = c("sthd_pop" = "pop")) %>%
+  # calculate proportions of available habitat for each site (cap each proportion at 1)
+  mutate(
+    p_chnk_ip_length_w = pmin(chnk_ip_length_w / chnk_pop_ip_length_w, 1),
+    p_chnk_ip_length_curr = pmin(chnk_ip_length_curr / chnk_pop_ip_length_curr, 1),
+    p_chnk_qrf_n = pmin(chnk_qrf_n / chnk_pop_qrf_n, 1),
+    p_chnk_avg = (p_chnk_ip_length_curr + p_chnk_qrf_n) / 2,
+    p_sthd_ip_length_w = pmin(sthd_ip_length_w / sthd_pop_ip_length_w, 1),
+    p_sthd_ip_length_curr = pmin(sthd_ip_length_curr / sthd_pop_ip_length_curr, 1),
+    p_sthd_qrf_n = pmin(sthd_qrf_n / sthd_pop_qrf_n, 1),
+    p_sthd_avg = (p_sthd_ip_length_curr + p_sthd_qrf_n) / 2
+  ) %>%
+  # replace any NA or NaN with a 1 i.e., all of the (lack of) habitat is monitored
+  replace_na(list(
+    p_chnk_ip_length_w = 1,
+    p_chnk_ip_length_curr = 1,
+    p_chnk_qrf_n = 1,
+    p_chnk_avg = 1,
+    p_sthd_ip_length_w = 1,
+    p_sthd_ip_length_curr = 1,
+    p_sthd_qrf_n = 1
+  )) %>%
+  select(site_code,
+         chnk_pop,
+         p_chnk_ip_length_curr,
+         p_chnk_qrf_n,
+         p_chnk_avg,
+         sthd_pop,
+         p_sthd_ip_length_curr,
+         p_sthd_qrf_n,
+         p_sthd_avg)
+
+# save the important objects
+save(site_avail_hab,
+     pop_avail_hab,
+     avail_hab_summ,
+     file = here("output/available_habitat/snake_available_habitat.rda"))
+  
+# explore differences in proportions of IP and QRF Redd Habitat
+# ggplot(avail_hab_summ, aes(x = p_sthd_qrf_n, y = p_sthd_ip_length_curr)) +
+#   geom_point(color = "blue") +
+#   geom_abline(a = 0, b = 1) +
+#   geom_text(aes(label = site_code)) +
+#   labs(x = "p(QRF Redd Capacity)", 
+#        y = "p(IP Habitat)", 
+#        title = "Scatterplot of proportion of steelhead habitat above IPTDS (IP vs. QRF).") +
+#   theme_minimal()
+# 
+# ggplot(avail_hab_summ, aes(x = p_chnk_qrf_n, y = p_chnk_ip_length_curr)) +
+#   geom_point(color = "blue") +
+#   geom_abline(a = 0, b =1) +
+#   geom_text(aes(label = site_code)) +
+#   labs(x = "p(QRF Redd Capacity)", 
+#        y = "p(IP Habitat)", 
+#        title = "Scatterplot of proportion of Chinook salmon habitat above IPTDS (IP vs. QRF).") +
+#   theme_minimal()
 
 ### END SCRIPT
