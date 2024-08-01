@@ -21,60 +21,8 @@ library(fisheR)
 #------------------------------
 # Part 1: IPTDS Operational Times
 
-# query all interrogation site metadata
-iptds_meta = queryInterrogationMeta() %>%
-  clean_names()
-
-# snake river interrogation site metadata
-sr_iptds_meta = iptds_meta %>%
-  filter(str_starts(rkm, "522"),
-         site_type %in% c("Instream Remote Detection System",
-                          "Adult Fishway"),
-         # removes the four Snake River dams
-         !operations_organization_code == "PSMFC") %>%
-  select(site_code,
-         name,
-         active,
-         operational,
-         first_year,
-         last_year,
-         first_date,
-         last_date,
-         last_file_opened_on,
-         operation_period,
-         operations_organization_code,
-         rkm,
-         site_type,
-         latitude,
-         longitude) ; rm(iptds_meta)
-
-# summarize iptds operational dates
-iptds_ops = sr_iptds_meta %>%
-  # get the latest date for each site
-  group_by(site_code) %>%
-  mutate(last_date = max(last_date, last_file_opened_on, na.rm = T)) %>%
-  ungroup() %>%
-  select(site_code,
-         active,
-         operational,
-         first_year,
-         last_year,
-         first_date,
-         last_date) %>%
-  mutate(first_date = as.Date(first_date),
-         last_date = as.Date(last_date)) %>%
-  # These sites don't have first_date and/or last_date; grabbed from PTAGIS
-  mutate(first_date = if_else(site_code == "BED", as.Date("2024-02-15"), first_date)) %>%
-  mutate(first_date = if_else(site_code == "UG3", as.Date("2024-07-09"), first_date)) %>%
-  mutate(last_date  = if_else(site_code == "UG3", as.Date(Sys.Date()),   last_date))  %>%
-  mutate(first_date = if_else(site_code == "UG4", as.Date("2024-07-09"), first_date)) %>%
-  mutate(last_date  = if_else(site_code == "UG4", as.Date(Sys.Date()),   last_date))
-
-# sequence of years that each site was in operation
-site_yrs = iptds_ops %>%
-  group_by(site_code) %>%
-  summarise(year = list(seq(min(year(first_date)), max(year(last_date)), by = 1))) %>%
-  unnest(year)
+# load iptds operational dates data frame
+load(here("output/iptds_operations/iptds_operations_dates.rda"))
 
 # summarize the years and days that each iptds was installed per year
 iptds_ops %<>%
