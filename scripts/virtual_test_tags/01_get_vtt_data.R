@@ -6,7 +6,7 @@
 # Created: April 29, 2024
 #   Last Modified: August 1, 2024
 # 
-# Notes: 
+# Notes: Break into two scripts!!!
 
 # clear environment
 rm(list = ls())
