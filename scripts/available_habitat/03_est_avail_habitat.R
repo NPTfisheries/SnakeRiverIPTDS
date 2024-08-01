@@ -114,28 +114,31 @@ ggplot() +
           size = 2) +
   theme_minimal()
 
-# prep the qrf data
-qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_redds.gpkg") %>%
-  clean_names() %>%
-  st_transform(default_crs) %>%
-  select(unique_id,
-         gnis_name,
-         reach_leng_m = reach_leng,
-         chnk,
-         sthd,
-         chnk_per_m,
-         chnk_per_m_se,
-         sthd_per_m,
-         sthd_per_m_se) %>%
-  # keep only reaches used by either sp/sum chinook or steelhead (according to StreamNet)
-  filter(chnk == TRUE | sthd == TRUE) %>%
-  # trim the qrf data to the extent of snake river steelhead populations
-  st_intersection(sthd_pops %>%
-                    st_union() %>%
-                    nngeo::st_remove_holes())
+# prep the qrf data (consider moving to a separate script)
+# qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_redds.gpkg") %>%
+#   clean_names() %>%
+#   st_transform(default_crs) %>%
+#   select(unique_id,
+#          gnis_name,
+#          reach_leng_m = reach_leng,
+#          chnk,
+#          sthd,
+#          chnk_per_m,
+#          chnk_per_m_se,
+#          sthd_per_m,
+#          sthd_per_m_se) %>%
+#   # keep only reaches used by either sp/sum chinook or steelhead (according to StreamNet)
+#   filter(chnk == TRUE | sthd == TRUE) %>%
+#   # trim the qrf data to the extent of snake river steelhead populations
+#   st_intersection(sthd_pops %>%
+#                     st_union() %>%
+#                     nngeo::st_remove_holes())
+# 
+# # save the prepped qrf dataset
+# save(qrf_sf, file = here("data/spatial/snake_redd_qrf.rda"))
 
-# save the prepped qrf dataset
-save(qrf_sf, file = here("data/spatial/snake_redd_qrf.rda"))
+# load the prepped qrf dataset
+load(file = here("data/spatial/snake_redd_qrf.rda"))
 
 # plot the qrf data
 ggplot() +
