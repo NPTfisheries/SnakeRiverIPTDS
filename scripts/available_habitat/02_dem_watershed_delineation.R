@@ -58,9 +58,8 @@ snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
 
 #--------------------
 # begin loop
-#for (s in 1:nrow(iptds_sf)) {
-for (s in 3) {
-  
+for (s in 1:nrow(iptds_sf)) {
+
   # grab the site and population
   site = iptds_sf[s,] %>% st_drop_geometry()
   pop = site$pop
