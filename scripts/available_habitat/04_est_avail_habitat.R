@@ -84,6 +84,37 @@ ggplot() +
   theme_minimal()
 
 #--------------------
+# estimate available ip and qrf habitat within iptds polygons
+for (s in 1:nrow(iptds_sf)) {
+  
+  # grab the site and watershed polygon
+  site = iptds_sf[s,] %>% st_drop_geometry()
+  site_poly = get(load(paste0(here("output/iptds_polygons"), "/", site$site_code, ".rda")))
+  
+  # summarize intrinsic potential habitat for each site polygon
+  site_ip = ip_sf %>%
+    st_intersection(site_poly) %>%
+    st_drop_geometry() %>%
+    summarize(sthd_ip_length_w = sum(length_w_sthd, na.rm = T),
+              sthd_ip_area_w = sum(area_w_sthd, na.rm = T),
+              sthd_ip_length_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = T),
+              sthd_ip_area_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = T),
+              chnk_ip_length_w = sum(length_w_chnk, na.rm = T),
+              chnk_ip_area_w = sum(area_w_chnk, na.rm = T),
+              chnk_ip_length_curr = sum(if_else(currchnk > 0, length_w_chnk, 0), na.rm = T),
+              chnk_ip_area_curr = sum(if_else(currchnk > 0, area_w_chnk, 0), na.rm = T),
+              .groups = "drop") %>%
+    mutate(site_code = site$site_code)
+  
+  # summarize redd qrf habitat for each site polygon
+  site_qrf = qrf_sf %>%
+    st_intersection(site_poly) %>%
+    st_drop_geometry()
+    
+  
+}
+
+#--------------------
 # estimate available ip habitat within trt populations
 sthd_pop_ip = ip_sf %>%
   st_drop_geometry() %>%
@@ -113,6 +144,5 @@ pop_ip = bind_rows(sthd_pop_ip, chnk_pop_ip) %>%
   mutate(ip_length_p = ip_length_curr / ip_length_w,
          ip_area_p = ip_area_curr / ip_area_w) %>%
   select(species, popid, everything()) ; rm(sthd_pop_ip, chnk_pop_ip)
-
 
 ### END SCRIPT
