@@ -85,64 +85,121 @@ ggplot() +
 
 #--------------------
 # estimate available ip and qrf habitat within iptds polygons
+
+# create empty data frame to store results for each site
+site_avail_hab = NULL
 for (s in 1:nrow(iptds_sf)) {
   
   # grab the site and watershed polygon
   site = iptds_sf[s,] %>% st_drop_geometry()
   site_poly = get(load(paste0(here("output/iptds_polygons"), "/", site$site_code, ".rda")))
   
+  cat(paste0("Estimating available habitat for site ", site$site_code, ".\n"))
+  
   # summarize intrinsic potential habitat for each site polygon
   site_ip = ip_sf %>%
     st_intersection(site_poly) %>%
     st_drop_geometry() %>%
-    summarize(sthd_ip_length_w = sum(length_w_sthd, na.rm = T),
-              sthd_ip_area_w = sum(area_w_sthd, na.rm = T),
-              sthd_ip_length_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = T),
-              sthd_ip_area_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = T),
-              chnk_ip_length_w = sum(length_w_chnk, na.rm = T),
+    summarize(chnk_ip_length_w = sum(length_w_chnk, na.rm = T),
               chnk_ip_area_w = sum(area_w_chnk, na.rm = T),
               chnk_ip_length_curr = sum(if_else(currchnk > 0, length_w_chnk, 0), na.rm = T),
               chnk_ip_area_curr = sum(if_else(currchnk > 0, area_w_chnk, 0), na.rm = T),
+              sthd_ip_length_w = sum(length_w_sthd, na.rm = T),
+              sthd_ip_area_w = sum(area_w_sthd, na.rm = T),
+              sthd_ip_length_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = T),
+              sthd_ip_area_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = T),
               .groups = "drop") %>%
     mutate(site_code = site$site_code)
   
   # summarize redd qrf habitat for each site polygon
   site_qrf = qrf_sf %>%
     st_intersection(site_poly) %>%
-    st_drop_geometry()
-    
+    st_drop_geometry() %>%
+    summarize(chnk_qrf_length_m = sum(ifelse(chnk, reach_leng_m, 0)),
+              chnk_qrf_n = sum(ifelse(chnk, chnk_per_m * reach_leng_m, 0)),
+              chnk_qrf_n_se = sum(ifelse(chnk, chnk_per_m_se * reach_leng_m, 0)),
+              sthd_qrf_length_m = sum(ifelse(sthd, reach_leng_m, 0)),
+              sthd_qrf_n = sum(ifelse(sthd, sthd_per_m * reach_leng_m, 0)),
+              sthd_qrf_n_se = sum(ifelse(sthd, sthd_per_m_se * reach_leng_m, 0)),
+              .groups = "drop") %>%
+    mutate(site_code = site$site_code)
   
+  # join the ip and qrf summaries for each site
+  site_ip_qrf = left_join(site_ip, site_qrf, by = "site_code") %>%
+    select(site_code, everything())
+  
+  # append ip and qrf results to site_avail_hab
+  site_avail_hab = rbind(site_avail_hab, site_ip_qrf)
+
 }
 
 #--------------------
 # estimate available ip habitat within trt populations
-sthd_pop_ip = ip_sf %>%
+pop_ip = ip_sf %>%
+  # estimate available ip habitat for chinook populations
+  st_join(chnk_pops %>%
+            select(chnk_pop = TRT_POPID)) %>%
   st_drop_geometry() %>%
-  group_by(sthd_popid) %>%
-  summarize(ip_length_w = sum(length_w_sthd, na.rm = T),
-            ip_area_w = sum(area_w_sthd, na.rm = T),
-            ip_length_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = T),
-            ip_area_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = T),
-            .groups = "drop") %>%
-  rename(popid = sthd_popid) %>%
-  mutate(species = "sthd") %>%
-  filter(!is.na(popid))
-
-chnk_pop_ip = ip_sf %>%
-  st_drop_geometry() %>%
-  group_by(chnk_popid) %>%
+  group_by(chnk_pop) %>%
   summarize(ip_length_w = sum(length_w_chnk, na.rm = T),
             ip_area_w = sum(area_w_chnk, na.rm = T),
             ip_length_curr = sum(if_else(currchnk > 0, length_w_chnk, 0), na.rm = T),
             ip_area_curr = sum(if_else(currchnk > 0, area_w_chnk, 0), na.rm = T),
             .groups = "drop") %>%
-  rename(popid = chnk_popid) %>%
+  rename(pop = chnk_pop) %>%
   mutate(species = "chnk") %>%
-  filter(!is.na(popid))
+  filter(!is.na(pop)) %>%
+  # estimate available ip habitat for steelhead populations
+  rbind(
+    ip_sf %>%
+      st_join(sthd_pops %>%
+                select(sthd_pop = TRT_POPID)) %>%
+      st_drop_geometry() %>%
+      group_by(sthd_pop) %>%
+      summarize(ip_length_w = sum(length_w_sthd, na.rm = T),
+                ip_area_w = sum(area_w_sthd, na.rm = T),
+                ip_length_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = T),
+                ip_area_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = T),
+                .groups = "drop") %>%
+      rename(pop = sthd_pop) %>%
+      mutate(species = "sthd") %>%
+      filter(!is.na(pop))
+  ) %>%
+  select(species, pop, everything())
 
-pop_ip = bind_rows(sthd_pop_ip, chnk_pop_ip) %>%
-  mutate(ip_length_p = ip_length_curr / ip_length_w,
-         ip_area_p = ip_area_curr / ip_area_w) %>%
-  select(species, popid, everything()) ; rm(sthd_pop_ip, chnk_pop_ip)
+#--------------------
+# estimate available qrf habitat within trt populations
+pop_qrf = qrf_sf %>%
+  # estimate available qrf habitat for chinook populations
+  st_join(chnk_pops %>%
+            select(chnk_pop = TRT_POPID)) %>%
+  st_drop_geometry() %>%
+  group_by(chnk_pop) %>%
+  summarize(qrf_length_m = sum(ifelse(chnk, reach_leng_m, 0)),
+            qrf_n = sum(ifelse(chnk, chnk_per_m * reach_leng_m, 0)),
+            qrf_n_se = sum(ifelse(chnk, chnk_per_m_se * reach_leng_m, 0)),
+            .groups = "drop") %>%
+  rename(pop = chnk_pop) %>%
+  mutate(species = "chnk") %>%
+  filter(!is.na(pop)) %>%
+  # estimate available qrf habitat for sthd populations
+  rbind(
+    qrf_sf %>%
+      st_join(sthd_pops %>%
+                select(sthd_pop = TRT_POPID)) %>%
+      st_drop_geometry() %>%
+      group_by(sthd_pop) %>%
+      summarize(qrf_length_m = sum(ifelse(sthd, reach_leng_m, 0)),
+                qrf_n = sum(ifelse(sthd, sthd_per_m * reach_leng_m, 0)),
+                qrf_n_se = sum(ifelse(sthd, sthd_per_m_se * reach_leng_m, 0)),
+                .groups = "drop") %>%
+      rename(pop = sthd_pop) %>%
+      mutate(species = "sthd") %>%
+      filter(!is.na(pop))
+  ) %>%
+  select(species, pop, everything())
+
+# join population ip and qrf results
+
 
 ### END SCRIPT

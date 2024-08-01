@@ -62,14 +62,7 @@ ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
   # move geometry to the end
   select(everything(), geometry) %>%
   # finally, remove stream reaches with "negligible" habitat
-  filter(!(chnk_wt == 0 & sthd_wt == 0)) #%>%
-# join mpg and trt population names 
-# st_join(sthd_pops %>%
-#           select(sthd_mpg = MPG,
-#                  sthd_popid = TRT_POPID)) %>%
-# st_join(chnk_pops %>%
-#           select(chnk_mpg = MPG,
-#                  chnk_popid = TRT_POPID))
+  filter(!(chnk_wt == 0 & sthd_wt == 0))
 
 # save the prepped intrinsic potential layer
 save(ip_sf, file = here("data/spatial/prepped_snake_ip.rda"))
