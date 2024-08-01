@@ -73,6 +73,13 @@ site_yrs = iptds_ops %>%
   summarise(year = list(seq(min(year(first_date)), max(year(last_date)), by = 1))) %>%
   unnest(year)
 
+# MIGHT BE ABLE TO MOVE CODE CHUNK MARKED IN 02 SCRIPT HERE
+
+# save iptds operational dates data frame
+save(iptds_ops,
+     site_yrs,
+     file = here("output/iptds_operations/iptds_operations_dates.rda"))
+
 #---------------------
 # Query virtual test tags via PTAGIS API requests
 

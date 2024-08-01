@@ -24,6 +24,7 @@ library(fisheR)
 # load iptds operational dates data frame
 load(here("output/iptds_operations/iptds_operations_dates.rda"))
 
+# THIS CODE CHUNK MAY ALSO BE ABLE TO BE MOVED TO 01 SCRIPT
 # summarize the years and days that each iptds was installed per year
 iptds_ops %<>%
   left_join(site_yrs, by = "site_code") %>%
@@ -214,6 +215,6 @@ ggsave(paste0(here("output/figures/virtual_test_tags/array_vtt_summary_"), Sys.D
 # save iptds operations objects
 save(iptds_ops,
      vtt_summ,
-     file = paste0(here("output/virtual_test_tags/iptds_operations_summaries_"), Sys.Date(), ".rda"))
+     file = paste0(here("output/iptds_operations/iptds_operations_summaries_"), Sys.Date(), ".rda"))
 
 ### END SCRIPT
