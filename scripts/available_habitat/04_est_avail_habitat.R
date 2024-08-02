@@ -52,6 +52,9 @@ iptds_sf = sites_sf %>%
 # load the prepped intrinsic potential and redd qrf datasets
 load(file = here("data/spatial/prepped_snake_ip.rda"))
 load(file = here("data/spatial/snake_redd_qrf.rda"))
+
+# CONSIDER ADDITIONAL FILTERING OF THE QRF DATASET TO REMOVE LOCATIONS WE DON'T BELIEVE SUPPORT SP/SUM CHINOOK
+# AND/OR STEELHEAD SPAWNING
   
 # plot the intrinsic potential data
 ggplot() +
