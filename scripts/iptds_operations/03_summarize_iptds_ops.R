@@ -12,49 +12,17 @@
 rm(list = ls())
 
 # load packages
-# library(tidyverse)
-# library(here)
+library(tidyverse)
+library(here)
 # library(PITcleanr)
 # library(janitor)
 # library(fisheR)
 
-#------------------------------
-# Part 1: IPTDS Operational Times
-
 # load iptds operational dates data frame
-load(here("output/iptds_operations/iptds_operations_dates.rda"))
-
-# THIS CODE CHUNK MAY ALSO BE ABLE TO BE MOVED TO 01 SCRIPT???
-# summarize the years and days that each iptds was installed per year
-iptds_ops %<>%
-  left_join(site_yrs, by = "site_code") %>%
-  group_by(site_code, year) %>%
-  summarise(
-    days = sum(pmax(0, pmin(last_date, as.Date(paste0(year, "-12-31"))) - pmax(first_date, as.Date(paste0(year, "-01-01"))) + 1))
-  ) %>%
-  spread(year, days, fill = 0) %>%
-  left_join(iptds_ops, by = "site_code") %>%
-  select(site_code,
-         active,
-         operational,
-         first_year,
-         last_year,
-         first_date,
-         last_date,
-         everything()) ; rm(site_yrs)
-
-# CAN THIS CODE CHUNK ALSO BE MOVED TO 01 SCRIPT???
-# which iptds sites are in biologic?
-source(here("keys/biologic_login.txt"))
-biologic_login(email, password)
-biologic_sites = get_biologic_sites() # biologic sites that i have permission for
-
-sr_sites_in_biologic = sr_iptds_meta %>%
-  filter(site_code %in% biologic_sites) %>%
-  pull(site_code)
+load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
 
 #------------------------------
-# Part 2: Virtual Test Tags
+# summarize queried VTT data
 
 # read in and combine virtual test tag data
 vtt_df = list.files(path = here("data/virtual_test_tags/"),
@@ -65,11 +33,8 @@ vtt_df = list.files(path = here("data/virtual_test_tags/"),
   map_dfr(bind_rows) %>%
   mutate(year = year(time_stamp)) 
 
-# summarise the number of vtt reads per hour by site, year, and antenna
+# summarize the number of vtt reads per hour by site, year, and antenna
 vtt_per_hr = vtt_df %>%
-  # filter to WEB, 2011 for now
-  # filter(site_code == "WEB",
-  #        year == 2011) %>%
   # round each time stamp down to the nearest hour
   mutate(time_stamp = floor_date(time_stamp, "hour")) %>%
   # count the number of vtt reads within each hour, per antenna
@@ -78,37 +43,34 @@ vtt_per_hr = vtt_df %>%
            transceiver_id,
            antenna_id,
            time_stamp) %>%
-  summarise(vtt_reads = n(),
+  summarize(vtt_reads = n(),
             .groups = "drop")
 
-# summarise the proportion of hours within each day each transceiver had vtt reads, averaged across antennas by site, year, and day
+# summarize the proportion of hours within each day each transceiver had vtt reads, averaged across antennas by site, year, and day
 vtt_per_day = vtt_per_hr %>%
-  # filter to ESS, 2023 for now
-  # filter(site_code == "LAP",
-  #        year == 2023) %>%
   mutate(date = as.Date(time_stamp)) %>%
-  # summarise the p of hours each day that each antenna had vtt_reads
+  # summarize the proportion of hours each day that each antenna had vtt_reads
   group_by(site_code,
            year,
            date,
            transceiver_id,
            antenna_id) %>%
-  summarise(p_vtt = sum(vtt_reads > 0) / 24,
+  summarize(p_vtt = sum(vtt_reads > 0) / 24,
             .groups = "drop") %>%
   # add in antennas that had no vtt_reads for a given site, year, and date
   group_by(site_code, year) %>%
   complete(date, transceiver_id,
            fill = list(p_vtt = 0)) %>%
-  # average p_vtt within each transceiver_id
+  # average p_vtt across antennas for each transceiver
   group_by(site_code,
            year,
            date,
            transceiver_id) %>%
-  summarise(p_vtt = mean(p_vtt),
+  summarize(p_vtt = mean(p_vtt),
             .groups = "drop")
 
-# example plot for a single site and year
-site = "BBA"
+# example plot for a single site and year, faceted by transceiver
+site = "KRS"
 yr = 2023
 vtt_per_day %>%
   filter(site_code == site,
@@ -116,7 +78,7 @@ vtt_per_day %>%
   group_by(site_code, year, transceiver_id) %>%
   summarise(.groups = "keep") %>%
   expand(date = format(seq(ymd("1900-01-01"),
-                           ymd("1900-05-31"),
+                           ymd("1900-12-31"),
                            by = "days"),
                        "%m-%d")) %>%
   mutate(date = as.Date(paste0(as.character(year), "-", date))) %>%
@@ -130,61 +92,93 @@ vtt_per_day %>%
              y = p_vtt)) +
   geom_line() +
   facet_wrap(~ transceiver_id, ncol = 1) +
-  theme_bw() +
+  theme_test() +
   labs(x = NULL,
-       y = "Proportion VTT Tags Read (Averaged Across Antennae)",
+       y = "Proportion VTT Tags Read (Averaged Across Antennas)",
        title = paste0(site, ", ", yr))
 
-# summary of vtt reads by site and year for each spawning season
+# summary of vtt reads by site and year
 vtt_summ = vtt_per_day %>%
   # create new df with each unique combo of site_code, year, and transceiver_id present in data
   group_by(site_code, year, transceiver_id) %>%
-  summarise(.groups = "keep") %>%
-  # expand data frame to include all mdays for each year
+  summarize(.groups = "keep") %>%
+  # expand data frame to include all month-days for each year
   expand(date = format(seq(ymd("1900-01-01"),
                            ymd("1900-12-31"),
                            by = "days"),
                        "%m-%d")) %>%
   mutate(date = as.Date(paste0(as.character(year), "-", date))) %>%
+  # join proportion of vtt reads
   left_join(vtt_per_day,
             by = c("site_code", "year", "transceiver_id", "date")) %>%
   # replace NAs with 0
   mutate(p_vtt = ifelse(is.na(p_vtt), 0, p_vtt),
+         # add columns for month and day
          month = month(date),
          day = day(date)) %>%
-  # set Chinook "spawning season"
+  # set chinook spawning season (June 1 - September 15)
   mutate(chnk = case_when(month == 6 & day >= 1 |
-                          month %in% 7:8 |
-                          month == 9 & day <= 15 ~ TRUE,
+                            month %in% 7:8 |
+                            month == 9 & day <= 15 ~ TRUE,
                           TRUE ~ FALSE)) %>%
-  # set steelhead "spawning season"
+  # set steelhead spawning season (March 1 - May 31)
   mutate(sthd = case_when(month %in% 3:5 ~ TRUE,
                           TRUE ~ FALSE)) %>%
-  # set coho "spawning season"
+  # set coho spawning season (October 1 - December 31)
   mutate(coho = case_when(month %in% 10:12 ~ TRUE,
                           TRUE ~ FALSE)) %>%
   select(-month, -day) %>%
-  # summarise the proportion of each spawning season that each transceiver was reading vtts, averaged across antenna
-  group_by(site_code,
-           year,
-           transceiver_id) %>%
-  summarise(
-    chnk_p_vtt = mean(p_vtt[chnk == T], na.rm = T),
-    sthd_p_vtt = mean(p_vtt[sthd == T], na.rm = T),
-    coho_p_vtt = mean(p_vtt[coho == T], na.rm = T),
-    .groups = "drop"
+  group_by(site_code, year, transceiver_id) %>%
+  summarize(
+    # calculate the mean of p_vtt where each species is TRUE, excluding groups where all values are 0
+    chnk_p_vtt = ifelse(all(chnk == 0), NA, mean(p_vtt[chnk == T], na.rm = T)),
+    sthd_p_vtt = ifelse(all(sthd == 0), NA, mean(p_vtt[sthd == T], na.rm = T)),
+    coho_p_vtt = ifelse(all(coho == 0), NA, mean(p_vtt[coho == T], na.rm = T)),
+    # check to see if there is any instance where chnk is TRUE and p_vtt is > 0; if so, return 1, otherwise return 0
+    chnk_n_ts = ifelse(any(chnk & p_vtt > 0, na.rm = TRUE), 1, 0),
+    sthd_n_ts = ifelse(any(sthd & p_vtt > 0, na.rm = TRUE), 1, 0),
+    coho_n_ts = ifelse(any(coho & p_vtt > 0, na.rm = TRUE), 1, 0)
   ) %>%
-  # add an id for arrays
-  mutate(array = paste0(site_code, "_", transceiver_id)) %>%
-  pivot_longer(cols = c(chnk_p_vtt, sthd_p_vtt, coho_p_vtt),
-               names_to = "species",
-               values_to = "p_vtt") %>%
-  mutate(species = recode(species,
-                          chnk_p_vtt = "Chinook",
-                          sthd_p_vtt = "Steelhead",
-                          coho_p_vtt = "Coho")) %>%
-  # remove 2024 for now, incomplete data
-  filter(year != 2024)
+  # now summarize by site and year (group transceivers); also count the number of transceivers in operation
+  group_by(site_code, year) %>%
+  summarize(
+    chnk_p_vtt = mean(chnk_p_vtt),
+    sthd_p_vtt = mean(sthd_p_vtt),
+    coho_p_vtt = mean(coho_p_vtt),
+    chnk_n_ts = sum(chnk_n_ts),
+    sthd_n_ts = sum(sthd_n_ts),
+    coho_n_ts = sum(coho_n_ts),
+    .groups = "drop") %>%
+  # re-format data frame to longer format
+  pivot_longer(
+    cols = c(chnk_p_vtt, sthd_p_vtt, coho_p_vtt),
+    names_to = "species",
+    names_prefix = "",
+    values_to = "p_vtt") %>%
+  mutate(
+    species = case_when(
+      species == "chnk_p_vtt" ~ "chnk",
+      species == "sthd_p_vtt" ~ "sthd",
+      species == "coho_p_vtt" ~ "coho")) %>%
+  mutate(n_transceiver = case_when(
+    species == "chnk" ~ chnk_n_ts,
+    species == "sthd" ~ sthd_n_ts,
+    species == "coho" ~ coho_n_ts
+  )) %>%
+  # finally, clean up the resulting data frame
+  select(species, 
+         site_code,
+         year,
+         p_vtt,
+         n_transceiver) %>%
+  # IMPORTANT STEP: Determine if site is operational or not
+  mutate(operational = ifelse(n_transceiver > 0 & # are there greater than 0 transceivers
+                              p_vtt >= 0.25,      # is p_vtt >= 0.25, averaged across transceivers and antennas
+                              TRUE,               # site is operational
+                              FALSE))             # site is not operational
+
+# plot vtt summaries by site and year
+
 
 # plot vtt summaries by array and year
 arrays = unique(vtt_summ$array)
@@ -214,8 +208,8 @@ ggsave(paste0(here("output/figures/virtual_test_tags/array_vtt_summary_"), Sys.D
        units = "in")
 
 # save iptds operations objects
-save(iptds_ops,
-     vtt_summ,
-     file = paste0(here("output/iptds_operations/iptds_operations_summaries_"), Sys.Date(), ".rda"))
+# save(iptds_ops,
+#      vtt_summ,
+#      file = paste0(here("output/iptds_operations/iptds_operations_summaries_"), Sys.Date(), ".rda"))
 
 ### END SCRIPT
