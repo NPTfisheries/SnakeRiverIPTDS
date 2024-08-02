@@ -74,7 +74,7 @@ site_yrs = iptds_ops %>%
   unnest(year)
 
 # summarize the years and days that each iptds was installed per year
-iptds_ops %<>%
+ptagis_ops = iptds_ops %>%
   left_join(site_yrs, by = "site_code") %>%
   group_by(site_code, year) %>%
   summarise(
@@ -92,7 +92,7 @@ iptds_ops %<>%
          everything())
 
 # save iptds operational dates data frame
-save(iptds_ops,
+save(ptagis_ops,
      site_yrs,
      file = here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
 

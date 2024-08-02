@@ -14,12 +14,6 @@ rm(list = ls())
 # load packages
 library(tidyverse)
 library(here)
-# library(PITcleanr)
-# library(janitor)
-# library(fisheR)
-
-# load iptds operational dates data frame
-load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
 
 #------------------------------
 # summarize queried VTT data
@@ -70,7 +64,7 @@ vtt_per_day = vtt_per_hr %>%
             .groups = "drop")
 
 # example plot for a single site and year, faceted by transceiver
-site = "KRS"
+site = "ZEN"
 yr = 2023
 vtt_per_day %>%
   filter(site_code == site,
@@ -137,7 +131,8 @@ vtt_summ = vtt_per_day %>%
     # check to see if there is any instance where chnk is TRUE and p_vtt is > 0; if so, return 1, otherwise return 0
     chnk_n_ts = ifelse(any(chnk & p_vtt > 0, na.rm = TRUE), 1, 0),
     sthd_n_ts = ifelse(any(sthd & p_vtt > 0, na.rm = TRUE), 1, 0),
-    coho_n_ts = ifelse(any(coho & p_vtt > 0, na.rm = TRUE), 1, 0)
+    coho_n_ts = ifelse(any(coho & p_vtt > 0, na.rm = TRUE), 1, 0),
+    .groups = "drop"
   ) %>%
   # now summarize by site and year (group transceivers); also count the number of transceivers in operation
   group_by(site_code, year) %>%
@@ -170,21 +165,13 @@ vtt_summ = vtt_per_day %>%
          site_code,
          year,
          p_vtt,
-         n_transceiver) %>%
-  # IMPORTANT STEP: Determine if site is operational or not
-  mutate(operational = ifelse(n_transceiver > 0 & # are there greater than 0 transceivers
-                              p_vtt >= 0.25,      # is p_vtt >= 0.25, averaged across transceivers and antennas
-                              TRUE,               # site is operational
-                              FALSE))             # site is not operational
+         n_transceiver) 
 
 # plot vtt summaries by site and year
-
-
-# plot vtt summaries by array and year
-arrays = unique(vtt_summ$array)
+sites = unique(vtt_summ$site_code)
 plot_list = list()
-for(a in arrays) {
-  array_p = subset(vtt_summ, array == a) %>%
+for(s in sites) {
+  site_p = subset(vtt_summ, site_code == s) %>%
     ggplot(aes(x = year,
                y = p_vtt,
                color = species)) +
@@ -192,24 +179,54 @@ for(a in arrays) {
     labs(x = NULL,
          y = "Avg. VTT Reads",
          color = NULL,
-         title = a) +
+         title = s) +
     scale_x_continuous(limits = c(min(vtt_summ$year), max(vtt_summ$year)),
                        breaks = seq(min(vtt_summ$year), max(vtt_summ$year), by = 1)) +
     scale_y_continuous(limits = c(0, 1)) +
     theme_bw()
   
-  plot_list[[a]] = array_p
+  plot_list[[s]] = site_p
 }
-all_arrays_p = gridExtra::marrangeGrob(plot_list, nrow = 8, ncol = 1)
-ggsave(paste0(here("output/figures/virtual_test_tags/array_vtt_summary_"), Sys.Date(), ".pdf"),
-       all_arrays_p,
+
+# save site vtt summary plot to .pdf
+all_sites_p = gridExtra::marrangeGrob(plot_list, nrow = 8, ncol = 1)
+ggsave(paste0(here("output/figures/iptds_operations/site_vtt_summary_"), Sys.Date(), ".pdf"),
+       all_sites_p,
        width = 8.5,
        height = 14,
        units = "in")
 
-# save iptds operations objects
-# save(iptds_ops,
-#      vtt_summ,
-#      file = paste0(here("output/iptds_operations/iptds_operations_summaries_"), Sys.Date(), ".rda"))
+#------------------------------
+# summarize ptagis operational dates and VTT summaries together
+# load iptds operational dates data frame
+load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
+
+site_ops = vtt_summ %>%
+  # IMPORTANT STEP: Determine if site is operational or not based on vtt data
+  mutate(vtt_operational = ifelse(n_transceiver > 0 & # are there greater than 0 transceivers
+                                  p_vtt >= 0.25,      # is p_vtt >= 0.25, averaged across transceivers and antennas
+                                  TRUE,               # site is operational
+                                  FALSE)) %>%         # site is not operational
+  # join some information from ptagis site operations
+  left_join(ptagis_ops %>%
+              select(site_code,
+                     ptagis_first_year = first_year,
+                     ptagis_last_year = last_year,
+                     `2010`:last_col()) %>%
+              pivot_longer(
+                cols = `2010`:last_col(),
+                names_to = "year",
+                values_to = "ptagis_n_days"
+              ) %>%
+              mutate(year = as.numeric(year)) %>%
+              mutate(ptagis_p_days = ptagis_n_days / 365) %>%
+              filter(year >= ptagis_first_year,
+                     year <= ptagis_last_year) %>%
+              select(-ptagis_first_year, -ptagis_last_year),
+            by = c("site_code", "year"))
+
+# JUST NEED TO BUTTON THIS UP TO MAKE FINAL DETERMINATIONS FOR SITE OPERATIONS BY SPECIES, SITE, AND YEAR!!!
+
+# save site operations summary
 
 ### END SCRIPT
