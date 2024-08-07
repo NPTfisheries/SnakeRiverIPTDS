@@ -107,7 +107,7 @@ ptagis_ops = iptds_op_dates %>%
   # summarize the proportion of days that each site was in operation by site_code and year, according to ptagis
   group_by(site_code, year) %>%
   summarize(
-    p_days_yr = sum(operational) / n(),
+    p_days_ptagis_yr = sum(operational) / n(),
     chnk_p_days = sum(operational & chnk) / sum(chnk),
     sthd_p_days = sum(operational & sthd) / sum(sthd),
     coho_p_days = sum(operational & coho) / sum(coho),
@@ -115,7 +115,7 @@ ptagis_ops = iptds_op_dates %>%
   # re-format data frame to longer format
   pivot_longer(cols = c(chnk_p_days, sthd_p_days, coho_p_days),
                names_to = "species",
-               values_to = "p_days") %>%
+               values_to = "p_days_ptagis_run") %>%
   mutate(species = case_when(
     species == "chnk_p_days" ~ "chnk",
     species == "sthd_p_days" ~ "sthd",
@@ -125,12 +125,11 @@ ptagis_ops = iptds_op_dates %>%
   select(species,
          site_code,
          year,
-         p_days,
-         p_days_yr)
+         p_days_ptagis_run,
+         p_days_ptagis_yr)
 
 # save iptds operational dates data frame
-save(iptds_op_dates,
-     site_yrs,
+save(site_yrs,
      ptagis_ops,
      file = here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
 
