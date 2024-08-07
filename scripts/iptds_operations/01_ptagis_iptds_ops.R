@@ -4,7 +4,7 @@
 #   based on info from PTAGIS.
 # 
 # Created: April 29, 2024
-#   Last Modified: August 2, 2024
+#   Last Modified: August 7, 2024
 # 
 # Notes: 
 
@@ -46,7 +46,7 @@ sr_iptds_meta = iptds_meta %>%
          longitude) ; rm(iptds_meta)
 
 # summarize iptds operational dates
-iptds_ops = sr_iptds_meta %>%
+iptds_op_dates = sr_iptds_meta %>%
   # get the latest date for each site
   group_by(site_code) %>%
   mutate(last_date = max(last_date, last_file_opened_on, last_file_closed_on, na.rm = T)) %>%
@@ -68,32 +68,70 @@ iptds_ops = sr_iptds_meta %>%
   mutate(first_date = if_else(site_code == "COU", as.Date("2024-02-28"), first_date))
 
 # sequence of years that each site was in operation
-site_yrs = iptds_ops %>%
+site_yrs = iptds_op_dates %>%
   group_by(site_code) %>%
   summarise(year = list(seq(min(year(first_date)), max(year(last_date)), by = 1))) %>%
   unnest(year)
 
-# summarize the years and days that each iptds was installed per year
-ptagis_ops = iptds_ops %>%
-  left_join(site_yrs, by = "site_code") %>%
-  group_by(site_code, year) %>%
-  summarise(
-    days = sum(pmax(0, pmin(last_date, as.Date(paste0(year, "-12-31"))) - pmax(first_date, as.Date(paste0(year, "-01-01"))) + 1))
-  ) %>%
-  spread(year, days, fill = 0) %>%
-  left_join(iptds_ops, by = "site_code") %>%
+# a function to generate a sequence of dates for a given year range
+gen_dates = function(start_year, end_year) {
+  seq(as.Date(paste0(start_year, "-01-01")), as.Date(paste0(end_year, "-12-31")), by = "day")
+}
+
+# Expand the data frame to include all dates for each site code
+ptagis_ops = iptds_op_dates %>%
+  # expand the data frame to include all dates from first_year to last_year for each site_code
+  rowwise() %>%
+  mutate(date = list(gen_dates(first_year, last_year))) %>%
+  unnest(date) %>%
+  # was the site operational for a given day, according to ptagis
+  mutate(op = (date >= first_date & date <= last_date)) %>%
   select(site_code,
-         active,
-         operational,
-         first_year,
-         last_year,
-         first_date,
-         last_date,
-         everything())
+         date,
+         operational = op) %>%
+  mutate(year = year(date),
+         month = month(date),
+         day = day(date)) %>%
+  # set chinook spawning season (June 1 - September 15)
+  mutate(chnk = case_when(month == 6 & day >= 1 |
+                            month %in% 7:8 |
+                            month == 9 & day <= 15 ~ TRUE,
+                          TRUE ~ FALSE)) %>%
+  # set steelhead spawning season (March 1 - May 31)
+  mutate(sthd = case_when(month %in% 3:5 ~ TRUE,
+                          TRUE ~ FALSE)) %>%
+  # set coho spawning season (October 1 - December 31)
+  mutate(coho = case_when(month %in% 10:12 ~ TRUE,
+                          TRUE ~ FALSE)) %>%
+  select(-month, -day) %>%
+  # summarize the proportion of days that each site was in operation by site_code and year, according to ptagis
+  group_by(site_code, year) %>%
+  summarize(
+    p_days_yr = sum(operational) / n(),
+    chnk_p_days = sum(operational & chnk) / sum(chnk),
+    sthd_p_days = sum(operational & sthd) / sum(sthd),
+    coho_p_days = sum(operational & coho) / sum(coho),
+  ) %>%
+  # re-format data frame to longer format
+  pivot_longer(cols = c(chnk_p_days, sthd_p_days, coho_p_days),
+               names_to = "species",
+               values_to = "p_days") %>%
+  mutate(species = case_when(
+    species == "chnk_p_days" ~ "chnk",
+    species == "sthd_p_days" ~ "sthd",
+    species == "coho_p_days" ~ "coho"
+    )) %>%
+  # finally, clean up the resulting data frame
+  select(species,
+         site_code,
+         year,
+         p_days,
+         p_days_yr)
 
 # save iptds operational dates data frame
-save(ptagis_ops,
+save(iptds_op_dates,
      site_yrs,
+     ptagis_ops,
      file = here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
 
 # which iptds sites are in biologic?
