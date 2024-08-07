@@ -135,6 +135,7 @@ save(site_yrs,
 
 # which iptds sites are in biologic?
 source(here("keys/biologic_login.txt"))
+#remotes::install_github("ryankinzer/fisheR")
 library(fisheR)
 biologic_login(email, password)
 biologic_sites = get_biologic_sites() # all biologic sites that i have permission for
