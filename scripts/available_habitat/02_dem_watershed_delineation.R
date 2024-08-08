@@ -4,7 +4,7 @@
 #   More details to come later.
 # 
 # Created: July 22, 2024
-#   Last Modified: 
+#   Last Modified: August 8, 2024
 # 
 # Notes:
 
@@ -38,6 +38,7 @@ sthd_pops = sth_pop %>%
 chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
+# create sf object of dabom sites
 dabom_site_sf = sites_sf %>%
   # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
   filter(str_detect(rkm, "^522\\.")) %>%
@@ -54,12 +55,17 @@ dabom_site_sf = sites_sf %>%
             dplyr::select(pop = TRT_POPID)) %>%
   arrange(site_code)
 
+# save dabom_site_sf
+save(dabom_site_sf,
+     file = here("output/available_habitat/dabom_sites_sf.rda"))
+
 # read in prepped DEM
 snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
 
 #--------------------
 # begin loop
-for (s in 1:nrow(dabom_site_sf)) {
+#for (s in 1:nrow(dabom_site_sf)) {
+for (s in 80) {
 
   # grab the site and population
   site = dabom_site_sf[s,] %>% st_drop_geometry()
@@ -177,8 +183,9 @@ for (s in 1:nrow(dabom_site_sf)) {
   if(site$site_code == "USI")    { loc = c(739787, 4975157) }
   if(site$site_code == "VC1")    { loc = c(664480, 4898268) }
   if(site$site_code == "WB1")    { loc = c(554055, 5067449) }
-  if(site$site_code == "ALPOWC") { loc = c(483581, 5139973)}
-  if(site$site_code == "TENMC2") { loc = c(500747, 5126945)}
+  if(site$site_code == "ALPOWC") { loc = c(483581, 5139973) }
+  if(site$site_code == "PAHH")   { loc = c(734246, 4952326) }
+  if(site$site_code == "TENMC2") { loc = c(500614, 5127071) }
 
   # if loc != coordinates of pp, update coordinates
   if(any(loc == coordinates(pp)) == FALSE) {

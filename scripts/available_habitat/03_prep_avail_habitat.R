@@ -4,7 +4,7 @@
 #   to estimating the available habitat in ICTRT populations and above IPTDS.
 # 
 # Created: August 1, 2024
-#   Last Modified: 
+#   Last Modified: August 8, 2024
 # 
 # Notes:
 
@@ -67,7 +67,12 @@ ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
 # save the prepped intrinsic potential layer
 save(ip_sf, file = here("data/spatial/prepped_snake_ip.rda"))
 
-# prep the qrf data (consider moving to a separate script)
+# ictrt population polygons
+load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
+sthd_pops = sth_pop %>%
+  st_transform(default_crs) ; rm(sth_pop)
+
+# prep the qrf data
 qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_redds.gpkg") %>%
   clean_names() %>%
   st_transform(default_crs) %>%
@@ -75,7 +80,9 @@ qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_re
          gnis_name,
          reach_leng_m = reach_leng,
          chnk,
+         chnk_use,
          sthd,
+         sthd_use,
          chnk_per_m,
          chnk_per_m_se,
          sthd_per_m,

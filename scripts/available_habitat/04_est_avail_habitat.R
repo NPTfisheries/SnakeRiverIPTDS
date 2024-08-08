@@ -32,30 +32,17 @@ chnk_pops = spsm_pop %>%
 
 # snake river iptds
 load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240304.rda")
-rm(configuration, node_paths, parent_child, pc_nodes)
+rm(configuration, node_paths, parent_child, pc_nodes, flowlines)
 
-iptds_sf = sites_sf %>%
-  # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
-  filter(str_detect(rkm, "^522\\.")) %>%
-  # note this excludes some sites below lgr, but those likely aren't appropriate for expansions anyways
-  filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>% 
-  # grab only INT sites
-  filter(site_type == "INT") %>%
-  dplyr::select(site_code) %>%
-  # transform to WGS84
-  st_transform(default_crs) %>%
-  # join ictrt populations to iptds (just using sthd for now)
-  st_join(sthd_pops %>%
-            dplyr::select(pop = TRT_POPID)) %>%
-  arrange(site_code)
+# load dabom_site_sf
+load(here("output/available_habitat/dabom_sites_sf.rda"))
 
 # load the prepped intrinsic potential and redd qrf datasets
 load(file = here("data/spatial/prepped_snake_ip.rda"))
-load(file = here("data/spatial/snake_redd_qrf.rda"))
+qrf_sf = get(load(file = here("data/spatial/snake_redd_qrf.rda"))) %>%
+  # the chnk_use and sthd_use designations are FAR from perfect, but this at least gets rid of some mainstem reaches
+  filter(!(chnk_use == "Migration only" & sthd_use == "Migration only"))
 
-# CONSIDER ADDITIONAL FILTERING OF THE QRF DATASET TO REMOVE LOCATIONS WE DON'T BELIEVE SUPPORT SP/SUM CHINOOK
-# AND/OR STEELHEAD SPAWNING
-  
 # plot the intrinsic potential data
 ggplot() +
   geom_sf(data = ip_sf,
@@ -65,7 +52,7 @@ ggplot() +
           fill = "gray90",
           color = "black",
           alpha = 0.5) +
-  geom_sf(data = iptds_sf, 
+  geom_sf(data = dabom_site_sf, 
           color = "red",
           size = 2) +
   labs(title = "Intrinsic Potential with IPTDS and Steelhead Populations") +
@@ -80,7 +67,7 @@ ggplot() +
           fill = "gray90",
           color = "black",
           alpha = 0.5) +
-  geom_sf(data = iptds_sf, 
+  geom_sf(data = dabom_site_sf, 
           color = "red",
           size = 2) +
   labs(title = "Redd QRF with IPTDS and Steelhead Populations") +
@@ -91,10 +78,10 @@ ggplot() +
 
 # create empty data frame to store results for each site
 site_avail_hab = NULL
-for (s in 1:nrow(iptds_sf)) {
+for (s in 1:nrow(dabom_site_sf)) {
   
   # grab the site and watershed polygon
-  site = iptds_sf[s,] %>% st_drop_geometry()
+  site = dabom_site_sf[s,] %>% st_drop_geometry()
   site_poly = get(load(paste0(here("output/iptds_polygons"), "/", site$site_code, ".rda")))
   
   cat(paste0("Estimating available habitat for site ", site$site_code, ".\n"))
@@ -207,7 +194,7 @@ pop_avail_hab = left_join(pop_ip, pop_qrf, by = c("species", "pop"))
 
 #--------------------
 # join and summarize site and population available habitat
-avail_hab_summ = iptds_sf %>%
+avail_hab_summ = dabom_site_sf %>%
   select(site_code) %>%
   left_join(site_avail_hab, by = "site_code") %>%
   select(site_code,
