@@ -3,9 +3,11 @@
 # Purpose: Summarize operations of sites used in DABOM.
 # 
 # Created: August 7, 2024
-#   Last Modified:
+#   Last Modified: August 8, 2024
 # 
-# Notes: 
+# Notes: I need to think about how I output the results of the following without overwriting previous stuff, especially when the user fills out
+# which sites are operational each year and which sites to use to produce abundance estimates. In the future, I may do this for individual years
+# after updating ptagis operations and vtt summaries and then append to previous results.
 
 # clear environment
 rm(list = ls())
