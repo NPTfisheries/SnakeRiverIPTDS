@@ -29,7 +29,7 @@ default_crs = st_crs(32611)               # set default crs: WGS 84, UTM zone 11
 
 # snake river iptds
 load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240304.rda")
-rm(configuration, node_paths, parent_child, pc_nodes)
+rm(configuration, node_paths, parent_child, pc_nodes, flowlines)
 
 # ictrt population polygons
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
@@ -38,13 +38,14 @@ sthd_pops = sth_pop %>%
 chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
-iptds_sf = sites_sf %>%
+dabom_site_sf = sites_sf %>%
   # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
   filter(str_detect(rkm, "^522\\.")) %>%
   # note this excludes some sites below lgr, but those likely aren't appropriate for expansions anyways
   filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>% 
-  # grab only INT sites
-  filter(site_type == "INT") %>%
+  # grab only INT sites or MRR sites previously used for population abundance estimates
+  filter(site_type == "INT" | 
+           site_code %in% c("SALEFT", "PAHH", "RAPH", "ALPOWC", "TENMC2")) %>%
   dplyr::select(site_code) %>%
   # transform to WGS84
   st_transform(default_crs) %>%
@@ -58,10 +59,10 @@ snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
 
 #--------------------
 # begin loop
-for (s in 1:nrow(iptds_sf)) {
+for (s in 1:nrow(dabom_site_sf)) {
 
   # grab the site and population
-  site = iptds_sf[s,] %>% st_drop_geometry()
+  site = dabom_site_sf[s,] %>% st_drop_geometry()
   pop = site$pop
   
   cat(paste0("Creating the watershed polygon for site ", site$site_code, ".\n"))
@@ -155,7 +156,7 @@ for (s in 1:nrow(iptds_sf)) {
   } # end breach and fill depressions, create D8 flow accumulation and pointer files, extract streams loop
 
   # set pour point
-  pp = iptds_sf %>%
+  pp = dabom_site_sf %>%
     filter(site_code == site$site_code) %>%
     dplyr::select(geometry) %>%
     distinct() %>%
@@ -164,18 +165,20 @@ for (s in 1:nrow(iptds_sf)) {
  
   # fix the pour point for some remaining sites that are too far from the raster streams
   loc = pp@coords # initially, set loc equal to coordinates of pp
-  if(site$site_code == "AGC") { loc = c(765062, 4983410) }
-  if(site$site_code == "AFC") { loc = c(477479, 5124384) }
-  if(site$site_code == "BHC") { loc = c(755989, 5000575) }
-  if(site$site_code == "BTL") { loc = c(787510, 4955448) }
-  if(site$site_code == "CCW") { loc = c(434932, 5004593) }
-  if(site$site_code == "ESS") { loc = c(615717, 4979148) }
-  if(site$site_code == "HEC") { loc = c(792429, 4952633) }
-  if(site$site_code == "HYC") { loc = c(765989, 4973079) }
-  if(site$site_code == "RFL") { loc = c(667607, 4892278) }
-  if(site$site_code == "USI") { loc = c(739787, 4975157) }
-  if(site$site_code == "VC1") { loc = c(664480, 4898268) }
-  if(site$site_code == "WB1") { loc = c(554055, 5067449) }
+  if(site$site_code == "AGC")    { loc = c(765062, 4983410) }
+  if(site$site_code == "AFC")    { loc = c(477479, 5124384) }
+  if(site$site_code == "BHC")    { loc = c(755989, 5000575) }
+  if(site$site_code == "BTL")    { loc = c(787510, 4955448) }
+  if(site$site_code == "CCW")    { loc = c(434932, 5004593) }
+  if(site$site_code == "ESS")    { loc = c(615717, 4979148) }
+  if(site$site_code == "HEC")    { loc = c(792429, 4952633) }
+  if(site$site_code == "HYC")    { loc = c(765989, 4973079) }
+  if(site$site_code == "RFL")    { loc = c(667607, 4892278) }
+  if(site$site_code == "USI")    { loc = c(739787, 4975157) }
+  if(site$site_code == "VC1")    { loc = c(664480, 4898268) }
+  if(site$site_code == "WB1")    { loc = c(554055, 5067449) }
+  if(site$site_code == "ALPOWC") { loc = c(483581, 5139973)}
+  if(site$site_code == "TENMC2") { loc = c(500747, 5126945)}
 
   # if loc != coordinates of pp, update coordinates
   if(any(loc == coordinates(pp)) == FALSE) {
