@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: July 31, 2024
+#   Last Modified: August 8, 2024
 # 
 # Notes:
 
@@ -278,8 +278,8 @@ save(site_avail_hab,
 #   geom_point(color = "blue") +
 #   geom_abline(a = 0, b = 1) +
 #   geom_text(aes(label = site_code)) +
-#   labs(x = "p(QRF Redd Capacity)", 
-#        y = "p(IP Habitat)", 
+#   labs(x = "p(QRF Redd Capacity)",
+#        y = "p(IP Habitat)",
 #        title = "Scatterplot of proportion of steelhead habitat above IPTDS (IP vs. QRF).") +
 #   theme_minimal()
 # 
@@ -287,8 +287,8 @@ save(site_avail_hab,
 #   geom_point(color = "blue") +
 #   geom_abline(a = 0, b =1) +
 #   geom_text(aes(label = site_code)) +
-#   labs(x = "p(QRF Redd Capacity)", 
-#        y = "p(IP Habitat)", 
+#   labs(x = "p(QRF Redd Capacity)",
+#        y = "p(IP Habitat)",
 #        title = "Scatterplot of proportion of Chinook salmon habitat above IPTDS (IP vs. QRF).") +
 #   theme_minimal()
 
