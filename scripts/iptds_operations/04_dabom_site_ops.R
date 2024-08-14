@@ -52,7 +52,7 @@ dabom_site_pops = sites_sf %>%
   mutate(trt_pop = case_when(
     site_code %in% c("SC1", "SC2") & species == "chnk" ~ "SCUMA",
     site_code %in% c("IR1", "IR2") & species == "chnk" ~ NA,      # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
-    site_code == "JOC"             & species == "chnk" ~ "Joseph",
+    #site_code == "JOC"             & species == "chnk" ~ "Joseph",
     site_code == "SW1"             & species == "chnk" ~ "SEUMA/SEMEA/SEMOO",
     site_code == "WR1"             & species == "chnk" ~ "GRLOS/GRMIN",
     site_code %in% c("SC1", "SC2") & species == "sthd" ~ "CRSFC-s",
