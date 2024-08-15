@@ -51,12 +51,12 @@ dabom_site_pops = sites_sf %>%
   # correct some population designations
   mutate(trt_pop = case_when(
     site_code %in% c("SC1", "SC2") & species == "chnk" ~ "SCUMA",
-    site_code %in% c("IR1", "IR2") & species == "chnk" ~ NA,      # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
-    #site_code == "JOC"             & species == "chnk" ~ "Joseph",
-    site_code == "SW1"             & species == "chnk" ~ "SEUMA/SEMEA/SEMOO",
+    #site_code %in% c("IR1", "IR2")& species == "chnk" ~ NA,      # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH; however, leaving them assigned as IRMAI, because we'll use their black boxes for population abundance
+    #site_code == "JOC"            & species == "chnk" ~ "Joseph",
+    site_code %in% c("SW1", "SW2") & species == "chnk" ~ "SEUMA/SEMEA/SEMOO",
     site_code == "WR1"             & species == "chnk" ~ "GRLOS/GRMIN",
     site_code %in% c("SC1", "SC2") & species == "sthd" ~ "CRSFC-s",
-    site_code == "USI"             & species == "sthd" ~ "SREFS-s",
+    site_code %in% c("USE", "USI") & species == "sthd" ~ NA,      # We don't necessarily know which population USI fish end up in
     TRUE ~ trt_pop
   )) %>%
   # STL and STR are MRR sites
@@ -173,7 +173,9 @@ dabom_mrr_ops = dabom_site_pops %>%
 dabom_ops = bind_rows(dabom_int_ops, dabom_mrr_ops) %>%
   left_join(tags_by_site, 
             by = c("species", "site_code", "spawn_year")) %>%
-  mutate(n_tags = replace_na(n_tags, 0)) %>%
+  mutate(n_tags = replace_na(n_tags, 0),
+         notes = NA) %>%
+  # consider adding a line where use_for_pop_abundance is auto set to FALSE if user_operational is FALSE
   select(species, 
          trt_pop, 
          site_code, 
@@ -183,7 +185,8 @@ dabom_ops = bind_rows(dabom_int_ops, dabom_mrr_ops) %>%
          p_vtt,
          n_transceiver,
          n_tags,
-         everything()) %>%
+         everything(),
+         notes) %>%
   arrange(site_code, species, trt_pop, spawn_year)
 
 # write dabom site operations summary to excel file
