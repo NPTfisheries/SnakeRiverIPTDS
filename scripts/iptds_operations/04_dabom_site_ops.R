@@ -39,9 +39,9 @@ dabom_site_pops = sites_sf %>%
             st_transform(crs = 4326) %>%
             select(chnk = TRT_POPID)) %>%
   left_join(read_excel("C:/Git/SnakeRiverFishStatus/data/coho_populations/coho_populations.xlsx") %>%
-              rename(site_code = spawn_site) %>%
+              #rename(site_code = spawn_site) %>%
               select(site_code,
-                     coho = coho_TRT_POPID)) %>%
+                     coho = coho_popid)) %>%
   # re-format data frame
   pivot_longer(
     cols = c(sthd, chnk, coho),
