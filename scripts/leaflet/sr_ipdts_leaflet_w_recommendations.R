@@ -34,9 +34,8 @@ iptds_cur = read_excel(here("data/prioritization/Snake River IPTDS Prioritizatio
 iptds_rec = read_excel(here("data/prioritization/iptds_site_recommendations_20240411.xlsx"),
                        sheet = "Sheet1") %>%
   filter(!site_code %in% c("EFS (Proposed)",
-                           "WB1",
-                           "SLT (Proposed)",
-                           "ALP (Proposed)")) %>%
+                           "WB1 (Proposed)",
+                           "SLT (Proposed)")) %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
   
