@@ -272,6 +272,11 @@ save(site_avail_hab,
      pop_avail_hab,
      avail_hab_summ,
      file = here("output/available_habitat/snake_available_habitat.rda"))
+
+# save the important objects to excel
+# library(writexl)
+# write_xlsx(x = list(site_avail_hab, pop_avail_hab, avail_hab_summ),
+#            path = here("output/available_habitat/snake_available_habitat.xlsx"))
   
 # explore differences in proportions of IP and QRF Redd Habitat
 # ggplot(avail_hab_summ, aes(x = p_sthd_qrf_n, y = p_sthd_ip_length_curr)) +
