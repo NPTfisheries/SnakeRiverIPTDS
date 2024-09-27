@@ -3,7 +3,7 @@
 # Purpose: Compile some IPTDS and/or MRR data for various purposes
 # 
 # Created: April 22, 2024
-#   Last Modified: July 10, 2024
+#   Last Modified: September 27, 2024
 # 
 # Notes: 
 
@@ -16,7 +16,7 @@ library(here)
 library(sf)
 
 # dabom mrr sites
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240304.rda") ; rm(flowlines, node_paths, pc_nodes)
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240927.rda") ; rm(flowlines)
 dabom_sites = parent_child %>%
   unlist() %>%
   unique() %>%
