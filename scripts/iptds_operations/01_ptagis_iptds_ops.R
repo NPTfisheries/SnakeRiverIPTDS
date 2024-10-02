@@ -4,7 +4,7 @@
 #   based on info from PTAGIS.
 # 
 # Created: April 29, 2024
-#   Last Modified: August 7, 2024
+#   Last Modified: October 2, 2024
 # 
 # Notes: 
 
@@ -17,17 +17,18 @@ library(PITcleanr)
 library(janitor)
 library(here)
 
-# query all interrogation site metadata
-iptds_meta = queryInterrogationMeta() %>%
-  clean_names()
+# load configuration files
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240927.rda") ; rm(configuration, flowlines, crb_sites_sf, parent_child)
+
+# list of snake river interrogation sites
+sr_int_sites = sr_site_pops %>%
+  filter(site_type == "INT") %>%
+  pull(site_code)
 
 # snake river interrogation site metadata
-sr_iptds_meta = iptds_meta %>%
-  filter(str_starts(rkm, "522"),
-         site_type %in% c("Instream Remote Detection System",
-                          "Adult Fishway"),
-         # removes the four Snake River dams
-         !operations_organization_code == "PSMFC") %>%
+sr_iptds_meta = queryInterrogationMeta() %>%
+  clean_names() %>%
+  filter(site_code %in% sr_int_sites) %>%
   select(site_code,
          name,
          active,
@@ -43,7 +44,7 @@ sr_iptds_meta = iptds_meta %>%
          rkm,
          site_type,
          latitude,
-         longitude) ; rm(iptds_meta)
+         longitude)
 
 # summarize iptds operational dates
 iptds_op_dates = sr_iptds_meta %>%
@@ -60,10 +61,9 @@ iptds_op_dates = sr_iptds_meta %>%
          last_date) %>%
   mutate(first_date = as.Date(first_date),
          last_date = as.Date(last_date)) %>%
-  # These sites don't have first_date and/or last_date; grabbed from PTAGIS
+  # these sites don't have first_date; grabbed from PTAGIS
   mutate(first_date = if_else(site_code == "BED", as.Date("2024-02-15"), first_date)) %>%
   mutate(first_date = if_else(site_code == "UG3", as.Date("2024-05-23"), first_date)) %>%
-  mutate(last_date  = if_else(site_code == "UG3", as.Date(Sys.Date()),   last_date))  %>%
   mutate(first_date = if_else(site_code == "UG4", as.Date("2024-05-23"), first_date)) %>%
   mutate(first_date = if_else(site_code == "COU", as.Date("2024-02-28"), first_date))
 
@@ -78,7 +78,7 @@ gen_dates = function(start_year, end_year) {
   seq(as.Date(paste0(start_year, "-01-01")), as.Date(paste0(end_year, "-12-31")), by = "day")
 }
 
-# Expand the data frame to include all dates for each site code
+# expand the data frame to include all dates for each site code
 ptagis_ops = iptds_op_dates %>%
   # expand the data frame to include all dates from first_year to last_year for each site_code
   rowwise() %>%
