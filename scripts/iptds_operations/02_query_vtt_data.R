@@ -1,10 +1,10 @@
 # -----------------------
 # Author: Mike Ackerman
-# Purpose: Query virtual test tag data for all Snake River sites in a given year
+# Purpose: Query virtual test tag data for all Snake River INT sites in a given year
 #   via PTAGIS API.
 # 
 # Created: August 2, 2024
-#   Last Modified:
+#   Last Modified: October 2, 2024
 # 
 # Notes: 
 
@@ -17,13 +17,13 @@ library(PITcleanr)
 library(here)
 
 # load sites in operation each year
-load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda")) ; rm(iptds_ops)
+load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
 
 # year of vtt tags to query
-yr = 2024
+yr = 2014
 
 # list of sites that were operational for the given year
-sites = site_yrs %>%
+int_sites_yr = site_yrs %>%
   filter(year == yr) %>%
   select(site_code) %>%
   pull()
@@ -33,7 +33,7 @@ api_key = read_table(here("keys/ma_ptagis_api_key.txt"), col_names = F) %>%
   as.character()
 
 #---------------------
-# Query virtual test tags via PTAGIS API requests
+# query virtual test tags via PTAGIS API requests
 
 # a single site and year, for example
 # vtt_df = queryTestTagSite(site_code = "ZEN",
@@ -53,7 +53,7 @@ api_key = read_table(here("keys/ma_ptagis_api_key.txt"), col_names = F) %>%
 #   facet_wrap(~antenna_id, ncol = 1)
 
 # query virtual test tag data for all sites operational in a given year
-for (s in sites) {
+for (s in int_sites_yr) {
   tryCatch({
     # use queryTestTagSite() from PITcleanr to send virtual test tag API request to PTAGIS
     vtt_df = queryTimerTagSite(site_code = s,
