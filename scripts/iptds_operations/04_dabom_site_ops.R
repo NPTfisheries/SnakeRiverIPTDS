@@ -3,7 +3,7 @@
 # Purpose: Summarize operations of sites used in DABOM.
 # 
 # Created: August 7, 2024
-#   Last Modified: August 8, 2024
+#   Last Modified: October 7, 2024
 # 
 # Notes: I need to think about how I output the results of the following without overwriting previous stuff, especially when the user fills out
 # which sites are operational each year and which sites to use to produce abundance estimates. In the future, I may do this for individual years
@@ -20,51 +20,22 @@ library(readxl)
 library(writexl)
 
 # load configuration files
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240304.rda") ; rm(flowlines, configuration, node_paths, parent_child, pc_nodes)
-load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240927.rda") ; rm(flowlines, configuration, parent_child, crb_sites_sf)
 
 # summarize populations for each site
-dabom_site_pops = sites_sf %>%
-  # filter for sites at or above LTR
-  filter(str_extract(rkm, "^[0-9]{3}") == "522" & as.numeric(str_extract(rkm, "(?<=\\.)[0-9]{3}")) >= 100) %>%
-  # remove GOA, LGR, and GRS
-  filter(!site_code %in% c("GOA", "LGR", "GRS")) %>%
-  select(site_code, site_type, geometry) %>%
-  st_transform(crs = 4326) %>%
-  # join steelhead, sp/sum chinook, and (made up) coho populations
-  st_join(sth_pop %>% 
-            st_transform(crs = 4326) %>%
-            select(sthd = TRT_POPID)) %>%
-  st_join(spsm_pop %>% 
-            st_transform(crs = 4326) %>%
-            select(chnk = TRT_POPID)) %>%
-  left_join(read_excel("C:/Git/SnakeRiverFishStatus/data/coho_populations/coho_populations.xlsx") %>%
-              #rename(site_code = spawn_site) %>%
-              select(site_code,
-                     coho = coho_popid)) %>%
+dabom_site_pops = sr_site_pops %>%
+  select(site_code,
+         site_type,
+         sthd = sthd_popid,
+         chnk = chnk_popid,
+         coho = coho_popid) %>%
   # re-format data frame
   pivot_longer(
     cols = c(sthd, chnk, coho),
     names_to = "species",
-    values_to = "trt_pop"
+    values_to = "popid"
   ) %>%
-  # correct some population designations
-  mutate(trt_pop = case_when(
-    site_code %in% c("SC1", "SC2") & species == "chnk" ~ "SCUMA",
-    #site_code %in% c("IR1", "IR2")& species == "chnk" ~ NA,      # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH; however, leaving them assigned as IRMAI, because we'll use their black boxes for population abundance
-    #site_code == "JOC"            & species == "chnk" ~ "Joseph",
-    site_code %in% c("SW1", "SW2") & species == "chnk" ~ "SEUMA/SEMEA/SEMOO",
-    site_code == "WR1"             & species == "chnk" ~ "GRLOS/GRMIN",
-    site_code %in% c("SC1", "SC2") & species == "sthd" ~ "CRSFC-s",
-    site_code %in% c("USE", "USI") & species == "sthd" ~ NA,      # We don't necessarily know which population USI fish end up in
-    TRUE ~ trt_pop
-  )) %>%
-  # STL and STR are MRR sites
-  mutate(site_type = case_when(
-    site_code %in% c("STR", "STL") ~ "MRR",
-    TRUE ~ site_type
-  )) %>%
-  st_drop_geometry() ; rm(spsm_pop, sth_pop)
+  st_drop_geometry()
 
 # load site operations datasets
 load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
@@ -108,7 +79,7 @@ dabom_int_ops = ptagis_ops %>%
   right_join(dabom_site_pops %>%
                # exclude MRR sites for now
                filter(site_type == "INT") %>%
-               select(species, site_code, trt_pop),
+               select(species, site_code, popid),
              by = c("species", "site_code")) %>%
   # for coho, remove any records prior to 2023
   filter(!(species == "coho" & spawn_year < 2023)) %>%
@@ -177,7 +148,7 @@ dabom_ops = bind_rows(dabom_int_ops, dabom_mrr_ops) %>%
          notes = NA) %>%
   # consider adding a line where use_for_pop_abundance is auto set to FALSE if user_operational is FALSE
   select(species, 
-         trt_pop, 
+         popid, 
          site_code, 
          spawn_year, 
          p_days_ptagis_run,
@@ -187,7 +158,7 @@ dabom_ops = bind_rows(dabom_int_ops, dabom_mrr_ops) %>%
          n_tags,
          everything(),
          notes) %>%
-  arrange(site_code, species, trt_pop, spawn_year)
+  arrange(site_code, species, popid, spawn_year)
 
 # write dabom site operations summary to excel file
 #write_xlsx(dabom_ops, path = paste0(here("output/iptds_operations/dabom_site_operations_"), Sys.Date(), ".xlsx"))
