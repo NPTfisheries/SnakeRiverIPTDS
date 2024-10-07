@@ -3,7 +3,7 @@
 # Purpose: Compile and summarise virtual test tag data for all Snake River sites from PTAGIS.
 # 
 # Created: May 6, 2024
-#   Last Modified: August 7, 2024
+#   Last Modified: October 7, 2024
 # 
 # Notes: 
 
@@ -178,7 +178,7 @@ for(s in sites) {
     ggplot(aes(x = year,
                y = p_vtt,
                color = species)) +
-    geom_line() +
+    geom_point() +
     labs(x = NULL,
          y = "Avg. VTT Reads",
          color = NULL,
