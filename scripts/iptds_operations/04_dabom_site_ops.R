@@ -3,7 +3,7 @@
 # Purpose: Summarize operations of sites used in DABOM.
 # 
 # Created: August 7, 2024
-#   Last Modified: October 7, 2024
+#   Last Modified: October 11, 2024
 # 
 # Notes: I need to think about how I output the results of the following without overwriting previous stuff, especially when the user fills out
 # which sites are operational each year and which sites to use to produce abundance estimates. In the future, I may do this for individual years
@@ -26,6 +26,7 @@ load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240
 dabom_site_pops = sr_site_pops %>%
   select(site_code,
          site_type,
+         incl_sites,
          sthd = sthd_popid,
          chnk = chnk_popid,
          coho = coho_popid) %>%
@@ -76,11 +77,11 @@ dabom_int_ops = ptagis_ops %>%
     ptagis_operational == FALSE & vtt_operational == FALSE ~ FALSE,
     TRUE ~ NA)) %>%
   # add populations; use right_join to remove sites not in dabom_site_pops
-  right_join(dabom_site_pops %>%
-               # exclude MRR sites for now
-               filter(site_type == "INT") %>%
-               select(species, site_code, popid),
-             by = c("species", "site_code")) %>%
+  # right_join(dabom_site_pops %>%
+  #              # exclude MRR sites for now
+  #              filter(site_type == "INT") %>%
+  #              select(species, site_code, popid),
+  #            by = c("species", "site_code")) %>%
   # for coho, remove any records prior to 2023
   filter(!(species == "coho" & spawn_year < 2023)) %>%
   arrange(site_code, spawn_year, species) %>%
@@ -146,11 +147,16 @@ dabom_ops = bind_rows(dabom_int_ops, dabom_mrr_ops) %>%
             by = c("species", "site_code", "spawn_year")) %>%
   mutate(n_tags = replace_na(n_tags, 0),
          notes = NA) %>%
+  # add populations; use right_join to remove sites not in dabom_site_pops
+  right_join(dabom_site_pops %>%
+               select(species, site_code, incl_sites, popid),
+             by = c("species", "site_code")) %>%
   # consider adding a line where use_for_pop_abundance is auto set to FALSE if user_operational is FALSE
-  select(species, 
-         popid, 
-         site_code, 
-         spawn_year, 
+  select(species,
+         popid,
+         site_code,
+         incl_sites,
+         spawn_year,
          p_days_ptagis_run,
          p_days_ptagis_yr,
          p_vtt,
