@@ -167,6 +167,6 @@ dabom_ops = bind_rows(dabom_int_ops, dabom_mrr_ops) %>%
   arrange(site_code, species, popid, spawn_year)
 
 # write dabom site operations summary to excel file
-#write_xlsx(dabom_ops, path = paste0(here("output/iptds_operations/dabom_site_operations_"), Sys.Date(), ".xlsx"))
+write_xlsx(dabom_ops, path = paste0(here("output/iptds_operations/dabom_site_operations_"), Sys.Date(), ".xlsx"))
 
 ### END SCRIPT
