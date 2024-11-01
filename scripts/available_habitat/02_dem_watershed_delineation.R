@@ -16,7 +16,7 @@ library(tidyverse)
 library(sf)
 library(here)
 library(raster)
-#install.packages("whitebox", repos="http://R-Forge.R-project.org")
+#install.packages("whitebox", repos = "http://R-Forge.R-project.org")
 library(whitebox)
 library(stars)
 
@@ -28,7 +28,7 @@ default_crs = st_crs(32611)               # set default crs: WGS 84, UTM zone 11
 # load and prep data
 
 # snake river iptds
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240304.rda")
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240927.rda")
 rm(configuration, node_paths, parent_child, pc_nodes, flowlines)
 
 # ictrt population polygons
@@ -39,33 +39,49 @@ chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
 # create sf object of dabom sites
-dabom_site_sf = sites_sf %>%
+dabom_site_sf = crb_sites_sf %>%
   # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
   filter(str_detect(rkm, "^522\\.")) %>%
   # note this excludes some sites below lgr, but those likely aren't appropriate for expansions anyways
-  filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>% 
-  # grab only INT sites or MRR sites previously used for population abundance estimates
-  filter(site_type == "INT" | 
-           site_code %in% c("SALEFT", "PAHH", "RAPH", "ALPOWC", "TENMC2")) %>%
+  filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>%
+  # grab only INT sites, for now
+  filter(site_type == "INT") %>%
   dplyr::select(site_code) %>%
-  # transform to WGS84
-  st_transform(default_crs) %>%
-  # join ictrt populations to iptds (just using sthd for now)
+  # join sthd and chnk populations to iptds sites
   st_join(sthd_pops %>%
-            dplyr::select(pop = TRT_POPID)) %>%
+            dplyr::select(sthd_pop = TRT_POPID)) %>%
+  st_join(chnk_pops %>%
+            dplyr::select(chnk_pop = TRT_POPID)) %>%
   arrange(site_code)
 
+# dabom_site_sf = sites_sf %>%
+#   # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
+#   filter(str_detect(rkm, "^522\\.")) %>%
+#   # note this excludes some sites below lgr, but those likely aren't appropriate for expansions anyways
+#   filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>% 
+#   # grab only INT sites or MRR sites previously used for population abundance estimates
+#   filter(site_type == "INT" | 
+#            site_code %in% c("SALEFT", "PAHH", "RAPH", "ALPOWC", "TENMC2")) %>%
+#   dplyr::select(site_code) %>%
+#   # transform to WGS84
+#   st_transform(default_crs) %>%
+#   # join ictrt populations to iptds (just using sthd for now)
+#   st_join(sthd_pops %>%
+#             dplyr::select(pop = TRT_POPID)) %>%
+#   arrange(site_code)
+
 # save dabom_site_sf
-save(dabom_site_sf,
-     file = here("output/available_habitat/dabom_sites_sf.rda"))
+# save(dabom_site_sf,
+#      file = here("output/available_habitat/dabom_sites_sf.rda"))
 
 # read in prepped DEM
 snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
 
+### CONTINUE HERE!!!
+
 #--------------------
 # begin loop
-#for (s in 1:nrow(dabom_site_sf)) {
-for (s in 80) {
+for (s in 1:nrow(dabom_site_sf)) {
 
   # grab the site and population
   site = dabom_site_sf[s,] %>% st_drop_geometry()
