@@ -4,7 +4,7 @@
 #   to estimating the available habitat in ICTRT populations and above IPTDS.
 # 
 # Created: August 1, 2024
-#   Last Modified: August 8, 2024
+#   Last Modified: November 5, 2024
 # 
 # Notes:
 
@@ -25,20 +25,19 @@ ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
   clean_names() %>%
   st_transform(default_crs) %>%
   # trim down to only useful columns
-  select(name,
-         llid,
-         strmname,
-         length_m = length,
-         elev_m = elev,
-         wide_ww,
-         wide_bf,
-         gradient,
-         sthdrate,
-         chinrate,
-         # current spawning, from state agencies, streamnet, observation, and expert opinion
-         currsthd = currsush,
-         currspch,
-         currsuch) %>%
+  select(name,                # Unique segment identifier
+         llid,                # water course longitude/latitude identifier number; derived unique water course route identifier from PNW Framework Hydrography (100k scale)
+         strmname,            # common name of watercourse from the PNW Framework Hydrography (100k scale)
+         length_m = length,   # segment length (m)
+         elev_m = elev,       # mean elevation of stream segment (m), calculated from USGS 10m DEM
+         wide_ww,             # modeled wetted width of stream (summer minimum) (m)
+         wide_bf,             # modeled bankfull width of stream, (m)
+         gradient,            # % gradient of stream segment, calculated from USGS DEM
+         sthdrate,            # Steelhead IP habitat rating value; 0 = none/very low, 1 = low, 2 = moderate, 3 = high quality
+         chinrate,            # Spring/Summer Chinook IP habitat rating value; 0 = none/very low, 1 = low, 2 = moderate, 3 = high quality
+         currsthd = currsush, # if value > 0 = current summer steelhead spawning, from state agencies, streamnet, observation, and expert opinion
+         currspch,            # if value > 0 = current Spring Chinook spawning, from state agencies, streamnet, observation, and expert opinion
+         currsuch) %>%        # if value > 0 = current Summer Chinook spawning, from state agencies, streamnet, observation, and expert opinion
   # merge current spring and summer chinook spawning into a single column
   mutate(currchnk = currspch + currsuch) %>%
   select(-currspch,-currsuch) %>%
@@ -66,6 +65,7 @@ ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
 
 # save the prepped intrinsic potential layer
 save(ip_sf, file = here("data/spatial/prepped_snake_ip.rda"))
+#st_write(ip_sf, here("data/spatial/prepped_snake_ip.gpkg"), layer = "prepped_ip", delete_dsn = T)
 
 # ictrt population polygons
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)

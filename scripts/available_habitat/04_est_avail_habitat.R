@@ -31,14 +31,24 @@ chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
 # snake river iptds
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240304.rda")
-rm(configuration, node_paths, parent_child, pc_nodes, flowlines)
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20241105.rda")
+rm(configuration, parent_child, flowlines)
 
-# load dabom_site_sf
-load(here("output/available_habitat/dabom_sites_sf.rda"))
+# create sf object of dabom sites
+sr_int_site_sf = sr_site_pops %>%
+  select(site_code, site_type, sthd_popid, chnk_popid) %>%
+  filter(site_type == "INT") %>%
+  st_join(crb_sites_sf %>%
+            select(rkm),
+          by = "site_code") %>%
+  # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
+  filter(str_detect(rkm, "^522\\.")) %>%
+  filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>%
+  select(-site_type, -rkm)
 
 # load the prepped intrinsic potential and redd qrf datasets
 load(file = here("data/spatial/prepped_snake_ip.rda"))
+
 qrf_sf = get(load(file = here("data/spatial/snake_redd_qrf.rda"))) %>%
   # the chnk_use and sthd_use designations are FAR from perfect, but this at least gets rid of some mainstem reaches
   filter(!(chnk_use == "Migration only" & sthd_use == "Migration only"))
@@ -52,7 +62,7 @@ ggplot() +
           fill = "gray90",
           color = "black",
           alpha = 0.5) +
-  geom_sf(data = dabom_site_sf, 
+  geom_sf(data = sr_int_site_sf, 
           color = "red",
           size = 2) +
   labs(title = "Intrinsic Potential with IPTDS and Steelhead Populations") +
@@ -67,7 +77,7 @@ ggplot() +
           fill = "gray90",
           color = "black",
           alpha = 0.5) +
-  geom_sf(data = dabom_site_sf, 
+  geom_sf(data = sr_int_site_sf, 
           color = "red",
           size = 2) +
   labs(title = "Redd QRF with IPTDS and Steelhead Populations") +
@@ -78,50 +88,92 @@ ggplot() +
 
 # create empty data frame to store results for each site
 site_avail_hab = NULL
-for (s in 1:nrow(dabom_site_sf)) {
+for (s in 1:nrow(sr_int_site_sf)) {
   
-  # grab the site and watershed polygon
-  site = dabom_site_sf[s,] %>% st_drop_geometry()
-  site_poly = get(load(paste0(here("output/iptds_polygons"), "/", site$site_code, ".rda")))
+  # grab the site and watershed polygons for each species
+  site = sr_int_site_sf[s,] %>% st_drop_geometry()
+  
+  # check if chnk_poly and sthd_poly files exist
+  chnk_poly_path = paste0(here("output/iptds_polygons/chnk"), "/", site$site_code, ".rda")
+  sthd_poly_path = paste0(here("output/iptds_polygons/sthd"), "/", site$site_code, ".rda")
+  
+  chnk_poly <- if (file.exists(chnk_poly_path)) get(load(chnk_poly_path)) else NULL
+  sthd_poly <- if (file.exists(sthd_poly_path)) get(load(sthd_poly_path)) else NULL
   
   cat(paste0("Estimating available habitat for site ", site$site_code, ".\n"))
   
   # summarize intrinsic potential habitat for each site polygon
-  site_ip = ip_sf %>%
-    st_intersection(site_poly) %>%
-    st_drop_geometry() %>%
-    summarize(chnk_ip_length_w = sum(length_w_chnk, na.rm = T),
-              chnk_ip_area_w = sum(area_w_chnk, na.rm = T),
-              chnk_ip_length_curr = sum(if_else(currchnk > 0, length_w_chnk, 0), na.rm = T),
-              chnk_ip_area_curr = sum(if_else(currchnk > 0, area_w_chnk, 0), na.rm = T),
-              sthd_ip_length_w = sum(length_w_sthd, na.rm = T),
-              sthd_ip_area_w = sum(area_w_sthd, na.rm = T),
-              sthd_ip_length_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = T),
-              sthd_ip_area_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = T),
-              .groups = "drop") %>%
-    mutate(site_code = site$site_code)
+  site_ip = if (!is.null(chnk_poly)) {
+    ip_sf %>%
+      st_intersection(chnk_poly) %>%
+      st_drop_geometry() %>%
+      summarize(
+        chnk_ip_length_w = sum(length_w_chnk, na.rm = TRUE),
+        chnk_ip_area_w = sum(area_w_chnk, na.rm = TRUE),
+        chnk_ip_length_curr = sum(if_else(currchnk > 0, length_w_chnk, 0), na.rm = TRUE),
+        chnk_ip_area_curr = sum(if_else(currchnk > 0, area_w_chnk, 0), na.rm = TRUE),
+        .groups = "drop"
+      )
+  } else {
+    tibble(chnk_ip_length_w = NA, chnk_ip_area_w = NA, chnk_ip_length_curr = NA, chnk_ip_area_curr = NA)
+  }
+  
+  site_ip = bind_cols(site_ip,
+                      if (!is.null(sthd_poly)) {
+                        ip_sf %>%
+                          st_intersection(sthd_poly) %>%
+                          st_drop_geometry() %>%
+                          summarize(
+                            sthd_ip_length_w = sum(length_w_sthd, na.rm = TRUE),
+                            sthd_ip_area_w = sum(area_w_sthd, na.rm = TRUE),
+                            sthd_ip_length_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = TRUE),
+                            sthd_ip_area_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = TRUE),
+                            .groups = "drop"
+                          )
+                        } else {
+                          tibble(sthd_ip_length_w = NA, sthd_ip_area_w = NA, sthd_ip_length_curr = NA, sthd_ip_area_curr = NA)
+                        }
+  ) %>% mutate(site_code = site$site_code)
   
   # summarize redd qrf habitat for each site polygon
-  site_qrf = qrf_sf %>%
-    st_intersection(site_poly) %>%
-    st_drop_geometry() %>%
-    summarize(chnk_qrf_length_m = sum(ifelse(chnk, reach_leng_m, 0)),
-              chnk_qrf_n = sum(ifelse(chnk, chnk_per_m * reach_leng_m, 0)),
-              chnk_qrf_n_se = sum(ifelse(chnk, chnk_per_m_se * reach_leng_m, 0)),
-              sthd_qrf_length_m = sum(ifelse(sthd, reach_leng_m, 0)),
-              sthd_qrf_n = sum(ifelse(sthd, sthd_per_m * reach_leng_m, 0)),
-              sthd_qrf_n_se = sum(ifelse(sthd, sthd_per_m_se * reach_leng_m, 0)),
-              .groups = "drop") %>%
-    mutate(site_code = site$site_code)
+  site_qrf = if (!is.null(chnk_poly)) {
+    qrf_sf %>%
+      st_intersection(chnk_poly) %>%
+      st_drop_geometry() %>%
+      summarize(
+        chnk_qrf_length_m = sum(ifelse(chnk, reach_leng_m, 0)),
+        chnk_qrf_n = sum(ifelse(chnk, chnk_per_m * reach_leng_m, 0)),
+        chnk_qrf_n_se = sum(ifelse(chnk, chnk_per_m_se * reach_leng_m, 0)),
+        .groups = "drop"
+      )
+  } else {
+    tibble(chnk_qrf_length_m = NA, chnk_qrf_n = NA, chnk_qrf_n_se = NA)
+  }
+  
+  site_qrf = bind_cols(site_qrf,
+                       if (!is.null(sthd_poly)) {
+                         qrf_sf %>%
+                           st_intersection(sthd_poly) %>%
+                           st_drop_geometry() %>%
+                           summarize(
+                             sthd_qrf_length_m = sum(ifelse(sthd, reach_leng_m, 0)),
+                             sthd_qrf_n = sum(ifelse(sthd, sthd_per_m * reach_leng_m, 0)),
+                             sthd_qrf_n_se = sum(ifelse(sthd, sthd_per_m_se * reach_leng_m, 0)),
+                             .groups = "drop"
+                           )
+                        } else {
+                          tibble(sthd_qrf_length_m = NA, sthd_qrf_n = NA, sthd_qrf_n_se = NA)
+                        }
+  ) %>% mutate(site_code = site$site_code)
   
   # join the ip and qrf summaries for each site
   site_ip_qrf = left_join(site_ip, site_qrf, by = "site_code") %>%
     select(site_code, everything())
   
   # append ip and qrf results to site_avail_hab
-  site_avail_hab = rbind(site_avail_hab, site_ip_qrf)
-
-}
+  site_avail_hab = bind_rows(site_avail_hab, site_ip_qrf)
+  
+} # end site loop
 
 #--------------------
 # estimate available ip habitat within trt populations
@@ -191,6 +243,27 @@ pop_qrf = qrf_sf %>%
 
 # join population ip and qrf results
 pop_avail_hab = left_join(pop_ip, pop_qrf, by = c("species", "pop"))
+
+#--------------------
+# join and summarize site and population available habitat
+avail_hab_summ = sr_int_site_sf %>%
+  st_drop_geometry() %>%
+  left_join(site_avail_hab, by = "site_code") %>%
+  select(site_code,
+         chnk_popid,
+         chnk_ip_length_w,
+         chnk_ip_length_curr,
+         chnk_qrf_n,
+         chnk_qrf_n_se,
+         sthd_popid,
+         sthd_ip_length_w,
+         sthd_ip_length_curr,
+         sthd_qrf_n,
+         sthd_qrf_n_se) %>%
+  mutate(chnk_poplist = str_split(chnk_popid, "/")) %>%
+  mutate(sthd_poplist = str_split(sthd_popid, "/"))
+
+### CONTINUE HERE!!!
 
 #--------------------
 # join and summarize site and population available habitat
