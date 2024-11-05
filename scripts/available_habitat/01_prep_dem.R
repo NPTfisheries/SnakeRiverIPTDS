@@ -4,7 +4,7 @@
 #   using the final DEM.
 # 
 # Created: July 15, 2024
-#   Last Modified: 
+#   Last Modified: November 5, 2024
 # 
 # Notes:
 
@@ -21,7 +21,7 @@ library(terra)
 # create a seamless dem
 
 # read in dem tiles
-dem_list = list.files("C:/Workspace/gis/10m_NED_DEMS", pattern = "*.tif", full.names = T) %>%
+dem_list = list.files("C:/Workspace/gis/10m_NED_DEMS/snake_river_tiles/", pattern = "*.tif", full.names = T) %>%
   lapply(., raster)
 
 # merge rasters to create mosaic with a larger spatial extent
@@ -40,6 +40,6 @@ filled_mosaic_crs32611 = terra::project(filled_mosaic, "EPSG:32611")
 filled_mosaic_raster = raster(filled_mosaic_crs32611)
 
 # save the final dem
-writeRaster(filled_mosaic_raster, here("data/spatial/snake_river_10m_ned_dem.tif"), overwrite = TRUE)
+writeRaster(filled_mosaic_raster, "C:/Workspace/gis/10m_NED_DEMs/snake_river_10m_ned_dem.tif", overwrite = TRUE)
 
 ### END SCRIPT
