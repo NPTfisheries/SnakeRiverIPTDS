@@ -86,6 +86,8 @@ ggplot() +
 #--------------------
 # estimate available ip and qrf habitat within iptds polygons
 
+# re-think how I do this here!
+
 # create empty data frame to store results for each site
 site_avail_hab = NULL
 for (s in 1:nrow(sr_int_site_sf)) {
