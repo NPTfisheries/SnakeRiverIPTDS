@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: November 6, 2024
+#   Last Modified: November 13, 2024
 # 
 # Notes:
 
@@ -269,24 +269,35 @@ avail_hab_df = site_avail_hab %>%
   select(site_code, 
          spc_code, 
          popid,
-         ip_length_w,
-         ip_length_w_curr,
-         qrf_n,
-         qrf_n_se,
+         site_ip_length_w_curr = ip_length_w_curr,
+         site_qrf_n = qrf_n,
+         site_qrf_n_se = qrf_n_se,
          -geometry) %>%
   left_join(pop_avail_hab %>%
               select(spc_code,
                      popid,
-                     pop_ip_length_w = ip_length_w,
                      pop_ip_length_w_curr = ip_length_w_curr,
                      pop_qrf_n = qrf_n,
                      pop_qrf_n_se = qrf_n_se),
             by = c("spc_code", "popid")) %>%
   mutate(
-    p_ip_length_w = ip_length_w / pop_ip_length_w,
-    p_ip_length_w_curr = ip_length_w_curr / pop_ip_length_w_curr,
-    p_qrf_n = qrf_n / pop_qrf_n,
-  )
+    p_ip_length_w_curr = site_ip_length_w_curr / pop_ip_length_w_curr,
+    p_qrf_n = site_qrf_n / pop_qrf_n,
+    # standard error of the proportion using the delta method
+    p_qrf_n_se = p_qrf_n * sqrt((site_qrf_n_se / site_qrf_n)^2 + (pop_qrf_n_se / pop_qrf_n)^2)
+  ) %>%
+  select(site_code,
+         spc_code,
+         popid,
+         site_ip_length_w_curr,
+         pop_ip_length_w_curr,
+         p_ip_length_w_curr,
+         site_qrf_n,
+         site_qrf_n_se,
+         pop_qrf_n,
+         pop_qrf_n_se,
+         p_qrf_n,
+         p_qrf_n_se)
 
 # save the important objects
 save(site_avail_hab,
@@ -295,22 +306,15 @@ save(site_avail_hab,
      file = here("output/available_habitat/snake_river_iptds_and_pop_available_habitat.rda"))
 
 # explore differences in proportions of IP and QRF Redd Habitat
-# ggplot(avail_hab_summ, aes(x = p_sthd_qrf_n, y = p_sthd_ip_length_curr)) +
-#   geom_point(color = "blue") +
-#   geom_abline(a = 0, b = 1) +
-#   geom_text(aes(label = site_code)) +
-#   labs(x = "p(QRF Redd Capacity)",
-#        y = "p(IP Habitat)",
-#        title = "Scatterplot of proportion of steelhead habitat above IPTDS (IP vs. QRF).") +
-#   theme_minimal()
-# 
-# ggplot(avail_hab_summ, aes(x = p_chnk_qrf_n, y = p_chnk_ip_length_curr)) +
-#   geom_point(color = "blue") +
-#   geom_abline(a = 0, b =1) +
-#   geom_text(aes(label = site_code)) +
-#   labs(x = "p(QRF Redd Capacity)",
-#        y = "p(IP Habitat)",
-#        title = "Scatterplot of proportion of Chinook salmon habitat above IPTDS (IP vs. QRF).") +
-#   theme_minimal()
+ggplot(avail_hab_df, aes(x = p_qrf_n, 
+                         y = p_ip_length_w_curr,
+                         color = spc_code)) +
+  geom_point() + 
+  geom_abline(a = 0, b = 1) +
+  geom_text(aes(label = site_code)) +
+  labs(x = "p(QRF)",
+       y = "p(IP)",
+       title = "Scatterplot of proportion of habitat above IPTDS (IP vs. QRF).") +
+  theme_minimal()
 
 ### END SCRIPT
