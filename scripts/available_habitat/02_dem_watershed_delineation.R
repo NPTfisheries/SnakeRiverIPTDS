@@ -40,10 +40,10 @@ chnk_pops = spsm_pop %>%
 
 # create sf object of dabom sites
 sr_int_site_sf = sr_site_pops %>%
-  select(site_code, site_type, sthd_popid, chnk_popid) %>%
+  dplyr::select(site_code, site_type, sthd_popid, chnk_popid) %>%
   filter(site_type == "INT") %>%
   st_join(crb_sites_sf %>%
-              select(rkm),
+              dplyr::select(rkm),
           by = "site_code") %>%
   # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
   filter(str_detect(rkm, "^522\\.")) %>%
@@ -57,8 +57,8 @@ for (spc in c("chnk", "sthd")) {
   
   # get the sites and pops for the given species
   spc_site_pops = sr_int_site_sf %>%
-    select(site_code,
-           popid = starts_with(spc)) %>%
+    dplyr::select(site_code,
+                  popid = starts_with(spc)) %>%
     filter(!is.na(popid)) %>%
     st_drop_geometry()
   
@@ -81,7 +81,7 @@ for (spc in c("chnk", "sthd")) {
     # get the population polygon
     poly = spc_pops %>%
       filter(TRT_POPID %in% pop) %>%
-      select(popid = TRT_POPID) %>%
+      dplyr::select(popid = TRT_POPID) %>%
       # to accommodate sites that cover multiple populations
       summarise(
         pop = paste(pop, collapse = "/"),
@@ -159,6 +159,7 @@ for (spc in c("chnk", "sthd")) {
     if(site$site_code == "HYC")    { loc = c(765989, 4973079) }
     if(site$site_code == "RFL")    { loc = c(667607, 4892278) }
     if(site$site_code == "USI")    { loc = c(739787, 4975157) }
+    if(site$site_code == "UGR" & spc == "chnk") { loc = c(428809, 5045476)}
     if(site$site_code == "VC1")    { loc = c(664480, 4898268) }
     if(site$site_code == "WB1")    { loc = c(554055, 5067449) }
     
