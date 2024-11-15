@@ -57,9 +57,7 @@ sr_int_sites_sf = sr_site_pops %>%
 # load the prepped intrinsic potential and redd qrf datasets
 load(file = here("data/spatial/prepped_snake_ip.rda"))
 
-qrf_sf = get(load(file = here("data/spatial/snake_redd_qrf.rda"))) %>%
-  # the chnk_use and sthd_use designations are FAR from perfect, but this at least gets rid of some mainstem reaches
-  filter(!(chnk_use == "Migration only" & sthd_use == "Migration only"))
+qrf_sf = get(load(file = here("data/spatial/snake_redd_qrf.rda")))
 
 # plot the intrinsic potential data
 ggplot() +
