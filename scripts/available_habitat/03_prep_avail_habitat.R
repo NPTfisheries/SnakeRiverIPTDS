@@ -20,7 +20,7 @@ library(janitor)
 # set default crs
 default_crs = st_crs(32611) # WGS 84, UTM zone 11N
 
-# prep intrinsic potential layer; already been clipped using snake river steelhead DPS
+# prep intrinsic potential layer; already been clipped using snake river steelhead dps
 ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
   clean_names() %>%
   st_transform(default_crs) %>%
