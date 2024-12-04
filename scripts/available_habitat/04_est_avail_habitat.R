@@ -16,6 +16,7 @@ library(tidyverse)
 library(sf)
 library(here)
 library(janitor)
+library(ggrepel)
 
 # set default crs
 default_crs = st_crs(32611) # WGS 84, UTM zone 11N
@@ -309,10 +310,26 @@ ggplot(avail_hab_df, aes(x = p_qrf_n,
                          color = spc_code)) +
   geom_point() + 
   geom_abline(a = 0, b = 1) +
-  geom_text(aes(label = site_code)) +
+  #geom_text(aes(label = site_code)) +
+  geom_text_repel(aes(label = site_code)) +
   labs(x = "p(QRF)",
        y = "p(IP)",
        title = "Scatterplot of proportion of habitat above IPTDS (IP vs. QRF).") +
+  theme_minimal()
+
+# explore differences in the total available IP vs. redd QRF habitat in trt populations
+avail_hab_df %>%
+  select(-site_code) %>%
+  distinct(popid, .keep_all = TRUE) %>%
+  ggplot(aes(x = pop_qrf_n,
+             y = pop_ip_length_w_curr,
+             color = spc_code)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  geom_text_repel(aes(label = popid), size = 3) +
+  labs(x = "QRF",
+       y = "IP",
+       title = "Scatterplot of available IP vs. QRF habitat.") +
   theme_minimal()
 
 ### END SCRIPT
