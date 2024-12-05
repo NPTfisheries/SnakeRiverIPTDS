@@ -60,7 +60,7 @@ ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
          area_w_chnk = area_ww * chnk_wt) %>%
   # move geometry to the end
   select(everything(), geometry) %>%
-  # finally, remove stream reaches with "negligible" habitat
+  # finally, remove stream reaches with "negligible" habitat for both species; just to reduce file size
   filter(!(chnk_wt == 0 & sthd_wt == 0))
 
 # save the prepped intrinsic potential layer
@@ -92,9 +92,7 @@ qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_re
   # trim the qrf data to the extent of snake river steelhead populations
   st_intersection(sthd_pops %>%
                     st_union() %>%
-                    nngeo::st_remove_holes()) %>%
-  # the chnk_use and sthd_use designations are FAR from perfect, but this at least gets rid of some mainstem reaches
-  filter(!(chnk_use == "Migration only" & sthd_use == "Migration only"))
+                    nngeo::st_remove_holes())
 
 # save the prepped qrf dataset
 save(qrf_sf, file = here("data/spatial/snake_redd_qrf.rda"))

@@ -63,7 +63,7 @@ qrf_sf = get(load(file = here("data/spatial/snake_redd_qrf.rda")))
 # plot the intrinsic potential data
 ggplot() +
   geom_sf(data = ip_sf,
-          color = "dodgerblue",
+          aes(color = as.factor(sthdrate)),
           size = 1) +
   geom_sf(data = sthd_pops,
           fill = "gray90",
@@ -78,7 +78,7 @@ ggplot() +
 # plot the qrf data
 ggplot() +
   geom_sf(data = qrf_sf,
-          color = "springgreen",
+          aes(color = sthd_use),
           size = 1) +
   geom_sf(data = sthd_pops,
           fill = "gray90",
@@ -135,16 +135,18 @@ for (s in 1:nrow(sr_int_sites_sf)) {
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
+        filter(., chnk == TRUE & chnk_use == "Spawning and rearing") %>%
         summarise(.,
-                  qrf_length_m = sum(ifelse(chnk, reach_leng_m, 0)),
-                  qrf_n = sum(ifelse(chnk, chnk_per_m * reach_leng_m, 0)),
-                  qrf_n_se = sum(ifelse(chnk, chnk_per_m_se * reach_leng_m, 0)),
+                  qrf_length_m = sum(reach_leng_m),
+                  qrf_n = sum(chnk_per_m * reach_leng_m),
+                  qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
                   .groups = "drop")
       } else if (spc_code == "sthd") {
+        filter(., sthd == TRUE & sthd_use == "Spawning and rearing") %>%
         summarise(.,
-                  qrf_length_m = sum(ifelse(sthd, reach_leng_m, 0)),
-                  qrf_n = sum(ifelse(sthd, sthd_per_m * reach_leng_m, 0)),
-                  qrf_n_se = sum(ifelse(sthd, sthd_per_m_se * reach_leng_m, 0)),
+                  qrf_length_m = sum(reach_leng_m),
+                  qrf_n = sum(sthd_per_m * reach_leng_m),
+                  qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
                   .groups = "drop")
       }
     } %>%
@@ -235,16 +237,18 @@ for (p in 1:nrow(pop_df)) {
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
+        filter(., chnk == TRUE & chnk_use == "Spawning and rearing") %>%
         summarise(.,
-                  qrf_length_m = sum(ifelse(chnk, reach_leng_m, 0)),
-                  qrf_n = sum(ifelse(chnk, chnk_per_m * reach_leng_m, 0)),
-                  qrf_n_se = sum(ifelse(chnk, chnk_per_m_se * reach_leng_m, 0)),
+                  qrf_length_m = sum(reach_leng_m),
+                  qrf_n = sum(chnk_per_m * reach_leng_m),
+                  qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
                   .groups = "drop")
       } else if (spc_code == "sthd") {
+        filter(., sthd == TRUE & sthd_use == "Spawning and rearing") %>%
         summarise(.,
-                  qrf_length_m = sum(ifelse(sthd, reach_leng_m, 0)),
-                  qrf_n = sum(ifelse(sthd, sthd_per_m * reach_leng_m, 0)),
-                  qrf_n_se = sum(ifelse(sthd, sthd_per_m_se * reach_leng_m, 0)),
+                  qrf_length_m = sum(reach_leng_m),
+                  qrf_n = sum(sthd_per_m * reach_leng_m),
+                  qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
                   .groups = "drop")
       }
     } %>%

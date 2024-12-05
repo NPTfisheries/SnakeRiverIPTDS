@@ -25,9 +25,7 @@ default_crs = st_crs(32611) # WGS 84, UTM zone 11N
 # ictrt population polygons
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 sthd_pops = sth_pop %>%
-  st_transform(default_crs) ; rm(sth_pop)
-chnk_pops = spsm_pop %>%
-  st_transform(default_crs) ; rm(spsm_pop)
+  st_transform(default_crs) ; rm(sth_pop, spsm_pop)
 
 # prep intrinsic potential layer; already been clipped using snake river steelhead dps
 ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
