@@ -117,29 +117,22 @@ qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_re
          sthd_per_m2,
          sthd_per_m2_se,
          geometry = geom) %>%
-  # keep only reaches used by either sp/sum chinook or steelhead (according to StreamNet)
-  #filter(chnk == TRUE | sthd == TRUE) %>%
   # trim the qrf data to the extent of snake river steelhead populations
   st_intersection(sthd_pops %>%
                     st_union() %>%
-                    nngeo::st_remove_holes()) #%>%
-  # the chnk_use and sthd_use designations are FAR from perfect, but this at least gets rid of some mainstem reaches
-  #filter(!(chnk_use == "Migration only" & sthd_use == "Migration only"))
+                    nngeo::st_remove_holes())
 
 # convert qrf polylines to points
 qrf_sf_midpts = qrf_sf %>%
   st_cast("LINESTRING") %>%
   select(unique_id) %>%
   # midpoint of each line segment
-  #mutate(midpoint = st_line_sample(geometry, sample = 0.5)) %>%
   mutate(geometry = st_centroid(geometry))
-  #st_cast("POINT")
 
 # plot the results of the point casting
 ggplot() +
   geom_sf(data = qrf_sf, aes(color = "Line Segments"), size = 1) +
   geom_sf(data = qrf_sf_midpts, aes(color = "Midpoints"), size = 0.1) +
-  # Customize the plot
   scale_color_manual(values = c("Line Segments" = "blue", "Midpoints" = "red")) +
   labs(title = "Midpoints of Line Segments",
        color = "Legend") +
