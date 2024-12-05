@@ -169,4 +169,7 @@ qrf_sf_w_ip_attr = qrf_sf %>%
   left_join(ip_4_qrf,
             by = "unique_id")
 
+# save the prepped qrf dataset
+save(qrf_sf_w_ip_attr, file = here("data/spatial/full_snake_redd_qrf_w_ip_attr.rda"))
+
 ### END SCRIPT
