@@ -336,4 +336,9 @@ avail_hab_df %>%
        title = "Scatterplot of available IP vs. QRF habitat.") +
   theme_minimal()
 
+ggsave(here("output/figures/available_habitat/pop_ip_vs_qrf.png"),
+       width = 11,
+       height = 8,
+       dpi = 300)
+
 ### END SCRIPT
