@@ -87,7 +87,7 @@ ip_sf = readRDS(here("data/spatial/ip.rds")) %>%
 # plot the intrinsic potential data
 ggplot() +
   geom_sf(data = ip_sf,
-          color = "dodgerblue",
+          aes(color = as.factor(sthdrate)),
           size = 1) +
   geom_sf(data = sthd_pops,
           fill = "gray90",
