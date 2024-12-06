@@ -164,10 +164,24 @@ for (s in 1:nrow(sr_int_sites_sf)) {
 
 #--------------------
 # estimate available habitat within trt populations
+
+# create sf of trt pops
 pop_df = sr_int_sites_sf %>%
   select(spc_code, popid) %>%
   st_drop_geometry() %>%
-  distinct()
+  distinct() %>%
+  # add in missing trt pops so their results are also available
+  bind_rows(
+    data.frame(
+      popid = chnk_pops$TRT_POPID[!chnk_pops$TRT_POPID %in% .$popid],
+      spc_code = "chnk"
+    ),
+    data.frame(
+      popid = sthd_pops$TRT_POPID[!sthd_pops$TRT_POPID %in% .$popid],
+      spc_code = "sthd"
+    )
+  ) %>%
+  arrange(spc_code, popid)
 
 pop_avail_hab = NULL
 for (p in 1:nrow(pop_df)) {
@@ -322,18 +336,17 @@ ggplot(avail_hab_df, aes(x = p_qrf_n,
   theme_minimal()
 
 # explore differences in the total available IP vs. redd QRF habitat in trt populations
-avail_hab_df %>%
-  select(-site_code) %>%
-  distinct(popid, .keep_all = TRUE) %>%
-  ggplot(aes(x = pop_qrf_n,
-             y = pop_ip_length_w_curr,
+pop_avail_hab %>%
+  filter(!str_detect(popid, "/")) %>%
+  ggplot(aes(x = qrf_n,
+             y = ip_length_w_curr,
              color = spc_code)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE) +
   geom_text_repel(aes(label = popid), size = 3) +
   labs(x = "QRF",
        y = "IP",
-       title = "Scatterplot of available IP vs. QRF habitat.") +
+       title = "Scatterplot of available IP vs. QRF habitat using their respective spatial extents.") +
   theme_minimal()
 
 ggsave(here("output/figures/available_habitat/pop_ip_vs_qrf.png"),
