@@ -90,6 +90,21 @@ ggplot() +
   labs(title = "Redd QRF with IPTDS and Steelhead Populations") +
   theme_minimal()
 
+# plot the qrf data
+ggplot() +
+  geom_sf(data = qrf_sf,
+          aes(color = chnk_use),
+          size = 1) +
+  geom_sf(data = chnk_pops,
+          fill = "gray90",
+          color = "black",
+          alpha = 0.5) +
+  geom_sf(data = sr_int_sites_sf, 
+          color = "red",
+          size = 2) +
+  labs(title = "Redd QRF with IPTDS and Chinook Salmon Populations") +
+  theme_minimal()
+
 #--------------------
 # estimate available ip and qrf habitat within iptds polygons
 
@@ -135,6 +150,7 @@ for (s in 1:nrow(sr_int_sites_sf)) {
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
+        #filter(., chnk == TRUE & !is.na(chnk_use)) %>%
         filter(., chnk == TRUE & chnk_use == "Spawning and rearing") %>%
         summarise(.,
                   qrf_length_m = sum(reach_leng_m),
@@ -251,6 +267,7 @@ for (p in 1:nrow(pop_df)) {
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
+        #filter(., chnk == TRUE & !is.na(chnk_use)) %>%
         filter(., chnk == TRUE & chnk_use == "Spawning and rearing") %>%
         summarise(.,
                   qrf_length_m = sum(reach_leng_m),
@@ -328,7 +345,6 @@ ggplot(avail_hab_df, aes(x = p_qrf_n,
                          color = spc_code)) +
   geom_point() + 
   geom_abline(a = 0, b = 1) +
-  #geom_text(aes(label = site_code)) +
   geom_text_repel(aes(label = site_code)) +
   labs(x = "p(QRF)",
        y = "p(IP)",

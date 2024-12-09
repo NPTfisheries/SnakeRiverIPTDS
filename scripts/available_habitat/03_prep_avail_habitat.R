@@ -73,7 +73,8 @@ sthd_pops = sth_pop %>%
   st_transform(default_crs) ; rm(sth_pop)
 
 # prep the qrf data
-qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_redds.gpkg") %>%
+qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_redds_sfsr_fixed.gpkg") %>%
+#qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_redds.gpkg") %>%
   clean_names() %>%
   st_transform(default_crs) %>%
   select(unique_id,
