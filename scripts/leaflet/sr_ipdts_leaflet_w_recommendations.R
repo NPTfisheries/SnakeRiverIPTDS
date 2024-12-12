@@ -36,7 +36,12 @@ curr_iptds_sf = iptds_sf %>%
 
 # inactive iptds
 past_iptds_sf = iptds_sf %>%
-  filter(ptagis_active == FALSE)
+  filter(ptagis_active == FALSE,
+         juv_detect_site != "Proposed")
+
+# juvenile detection sites
+juv_iptds_sf = iptds_sf %>%
+  filter(juv_detect_site != FALSE)
 
 # iptds recommendations
 recommendations_sf = read_excel(here("data/prioritization/iptds_site_recommendations_20241211.xlsx"),
@@ -88,6 +93,10 @@ priority_col = colorFactor(c("red", "orange", "yellow"),
                            domain = recommendations_sf$action_priority, 
                            levels = c("HIGH", "MED", "LOW"),
                            na.color = "transparent")
+
+juv_col = colorFactor(c("black", "gray50", "cyan"),
+                      domain = juv_iptds_sf$juv_detect_site,
+                      levels = c("Good To Go", "Good w/ Upgrades", "Proposed"))
 
 # -----------------------
 # build leaflet
@@ -169,6 +178,14 @@ sr_iptds_leaflet = base %>%
                                  "<b>O&M Agency:</b>", curr_iptds_sf$om_agency, "</br>",
                                  "<b>O&M Responsibility:</b>", curr_iptds_sf$om_responsibility, "</br>",
                                  "<b>Site Description:</b>", curr_iptds_sf$site_description, "</br>")) %>%
+  # add a legend for integrated o&m colors
+  addLegend(data = curr_iptds_sf,
+            position = "bottomleft",
+            pal = om_col,
+            values = ~factor(integrated_om_site, levels = c("TRUE", "FALSE")),
+            title = "Integrated O&M Site",
+            group = "Current IPTDS Sites",
+            opacity = 0.8) %>%
   # add past iptds
   addCircleMarkers(data = past_iptds_sf,
                    group = "Past IPTDS Sites",
@@ -192,17 +209,9 @@ sr_iptds_leaflet = base %>%
                                  "<b>O&M Agency:</b>", past_iptds_sf$om_agency, "</br>",
                                  "<b>O&M Responsibility:</b>", past_iptds_sf$om_responsibility, "</br>",
                                  "<b>Site Description:</b>", past_iptds_sf$site_description, "</br>")) %>%
-  # add a legend for integrated o&m colors
-  addLegend(data = curr_iptds_sf,
-            position = "bottomleft",
-            pal = om_col,
-            values = ~factor(integrated_om_site, levels = c("TRUE", "FALSE")),
-            title = "Integrated O&M Site",
-            group = "Current IPTDS Sites",
-            opacity = 0.8) %>%
   # add iptds recommendations
   addCircleMarkers(data = recommendations_sf,
-                   group = "IPTDS Recommendations",
+                   group = "Integrated O&M Recommendations",
                    label = ~site_code,
                    fillColor = ~recommendation_col(recommendation),
                    fillOpacity = 0.8,
@@ -221,7 +230,7 @@ sr_iptds_leaflet = base %>%
                                                          "MED", 
                                                          "LOW")),
             title = "Priority (Border)",
-            group = "IPTDS Recommendations",
+            group = "Integrated O&M Recommendations",
             opacity = 0.8) %>%
   # add a legend for recommendation colors
   addLegend(data = recommendations_sf,
@@ -231,8 +240,30 @@ sr_iptds_leaflet = base %>%
                                                         "Proposed New Site", 
                                                         "Candidate for O&M Project", 
                                                         "Decommission, Remove, or Transfer")),
-            title = "IPTDS Recommendations",
-            group = "IPTDS Recommendations",
+            title = "Integrated O&M Recommendations",
+            group = "Integrated O&M Recommendations",
+            opacity = 0.8) %>%
+  # add info on juvenile detection sites
+  addCircleMarkers(data = juv_iptds_sf,
+              group = "Juvenile Obs Sites",
+              label = ~site_code,
+              fillColor = ~juv_col(juv_detect_site),
+              fillOpacity = 8,
+              color = NA,
+              opacity = 0,
+              radius = 8,
+              popup = paste("<b>Site Code:</b>", juv_iptds_sf$site_code, "</br>",
+                            "<b>Site Name:</b>", juv_iptds_sf$site_name, "</br>",
+                            "<b>Biomark Integrated O&M Site:</b>", juv_iptds_sf$integrated_om_site, "</br>")) %>%
+  # add a legend for juvenile detection sites
+  addLegend(data = juv_iptds_sf,
+            position = "bottomleft",
+            pal = juv_col,
+            values = ~factor(juv_detect_site, levels = c("Good To Go",
+                                                         "Good w/ Upgrades",
+                                                         "Proposed")),
+            title = "Juvenile Obs Sites",
+            group = "Juvenile Obs Sites",
             opacity = 0.8) %>%
   # dabom mrr sites
   addCircles(data = mrr_sites,
@@ -251,11 +282,13 @@ sr_iptds_leaflet = base %>%
                                   "Sp/Sum Chinook Spawning Areas"),
                    overlayGroups = c("Current IPTDS Sites",
                                      "Past IPTDS Sites",
-                                     "IPTDS Recommendations",
+                                     "Integrated O&M Recommendations",
+                                     "Juvenile Obs Sites",
                                      "DABOM MRR Sites"),
                    options = layersControlOptions(collapsed = FALSE)) %>%
   hideGroup("Past IPTDS Sites") %>%
-  hideGroup("IPTDS Recommendations") %>%
+  hideGroup("Integrated O&M Recommendations") %>%
+  hideGroup("Juvenile Obs Sites") %>%
   hideGroup("DABOM MRR Sites")
 
 sr_iptds_leaflet
