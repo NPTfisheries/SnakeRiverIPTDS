@@ -24,11 +24,19 @@ library(htmlwidgets)
 # -----------------------
 # compile data
 
-# current iptds data
+# maintained iptds metadata
 iptds_sf = read_excel(here("data/prioritization/Maintained Snake River IPTDS Metadata 20241211.xlsx"),
                       sheet = "SR_IPTDS_Sites") %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
+
+# current iptds
+curr_iptds_sf = iptds_sf %>%
+  filter(ptagis_active == TRUE)
+
+# inactive iptds
+past_iptds_sf = iptds_sf %>%
+  filter(ptagis_active == FALSE)
 
 # iptds recommendations
 recommendations_sf = read_excel(here("data/prioritization/iptds_site_recommendations_20241211.xlsx"),
@@ -139,8 +147,7 @@ sr_iptds_leaflet = base %>%
               opacity = 1,
               label = ~paste0(POP_NAME, ": ", MSA_NAME, ", ", TYPE)) %>%
   # add current iptds
-  addCircleMarkers(data = iptds_sf %>%
-                     filter(ptagis_active == TRUE),
+  addCircleMarkers(data = curr_iptds_sf,
                    group = "Current IPTDS Sites",
                    label = ~site_code,
                    fillColor = ~om_col(integrated_om_site), # fill color
@@ -149,22 +156,21 @@ sr_iptds_leaflet = base %>%
                    opacity = 1,                             # border opacity
                    weight = 1,                              # border thickness
                    radius = 8,                              # marker size in pixels
-                   popup = paste("<b>Site Code:</b>", iptds_sf$site_code, "</br>",
-                                 "<b>Site Name:</b>", iptds_sf$site_name, "</br>",
-                                 "<b>Stream:</b>", iptds_sf$stream, "</br>",
-                                 "<b>PTAGIS Active:</b>", iptds_sf$ptagis_active, "</br>",
-                                 "<b>Arrays:</b>", iptds_sf$node_count, "</br>",
-                                 "<b>Antennas:</b>", iptds_sf$antenna_count, "</br>",
-                                 "<b>Biomark Integrated O&M Site:</b>", iptds_sf$integrated_om_site, "</br>",
-                                 "<b>Detection Probabilities:</b>", iptds_sf$detection_prob, "</br>",
-                                 # "<b>Current Funding:</b>", iptds_sf$current_funding, "</br>",
-                                 # "<b>BPA Funding Type:</b>", iptds_sf$bpa_funding, "</br>",
-                                 "<b>O&M Agency:</b>", iptds_sf$om_agency, "</br>",
-                                 "<b>O&M Responsibility:</b>", iptds_sf$om_responsibility, "</br>",
-                                 "<b>Site Description:</b>", iptds_sf$site_description, "</br>")) %>%
+                   popup = paste("<b>Site Code:</b>", curr_iptds_sf$site_code, "</br>",
+                                 "<b>Site Name:</b>", curr_iptds_sf$site_name, "</br>",
+                                 "<b>Stream:</b>", curr_iptds_sf$stream, "</br>",
+                                 "<b>PTAGIS Active:</b>", curr_iptds_sf$ptagis_active, "</br>",
+                                 "<b>Arrays:</b>", curr_iptds_sf$node_count, "</br>",
+                                 "<b>Antennas:</b>", curr_iptds_sf$antenna_count, "</br>",
+                                 "<b>Biomark Integrated O&M Site:</b>", curr_iptds_sf$integrated_om_site, "</br>",
+                                 # "<b>Detection Probabilities:</b>", curr_iptds_sf$detection_prob, "</br>",
+                                 # "<b>Current Funding:</b>", curr_iptds_sf$current_funding, "</br>",
+                                 # "<b>BPA Funding Type:</b>", curr_iptds_sf$bpa_funding, "</br>",
+                                 "<b>O&M Agency:</b>", curr_iptds_sf$om_agency, "</br>",
+                                 "<b>O&M Responsibility:</b>", curr_iptds_sf$om_responsibility, "</br>",
+                                 "<b>Site Description:</b>", curr_iptds_sf$site_description, "</br>")) %>%
   # add past iptds
-  addCircleMarkers(data = iptds_sf %>%
-                     filter(ptagis_active == FALSE),
+  addCircleMarkers(data = past_iptds_sf,
                    group = "Past IPTDS Sites",
                    label = ~site_code,
                    fillColor = ~om_col(integrated_om_site), # fill color
@@ -173,21 +179,21 @@ sr_iptds_leaflet = base %>%
                    opacity = 1,                             # border opacity
                    weight = 1,                              # border thickness
                    radius = 8,                              # marker size in pixels
-                   popup = paste("<b>Site Code:</b>", iptds_sf$site_code, "</br>",
-                                 "<b>Site Name:</b>", iptds_sf$site_name, "</br>",
-                                 "<b>Stream:</b>", iptds_sf$stream, "</br>",
-                                 "<b>PTAGIS Active:</b>", iptds_sf$ptagis_active, "</br>",
-                                 "<b>Arrays:</b>", iptds_sf$node_count, "</br>",
-                                 "<b>Antennas:</b>", iptds_sf$antenna_count, "</br>",
-                                 "<b>Biomark Integrated O&M Site:</b>", iptds_sf$integrated_om_site, "</br>",
-                                 "<b>Detection Probabilities:</b>", iptds_sf$detection_prob, "</br>",
-                                 # "<b>Current Funding:</b>", iptds_sf$current_funding, "</br>",
-                                 # "<b>BPA Funding Type:</b>", iptds_sf$bpa_funding, "</br>",
-                                 "<b>O&M Agency:</b>", iptds_sf$om_agency, "</br>",
-                                 "<b>O&M Responsibility:</b>", iptds_sf$om_responsibility, "</br>",
-                                 "<b>Site Description:</b>", iptds_sf$site_description, "</br>")) %>%
+                   popup = paste("<b>Site Code:</b>", past_iptds_sf$site_code, "</br>",
+                                 "<b>Site Name:</b>", past_iptds_sf$site_name, "</br>",
+                                 "<b>Stream:</b>", past_iptds_sf$stream, "</br>",
+                                 "<b>PTAGIS Active:</b>", past_iptds_sf$ptagis_active, "</br>",
+                                 "<b>Arrays:</b>", past_iptds_sf$node_count, "</br>",
+                                 "<b>Antennas:</b>", past_iptds_sf$antenna_count, "</br>",
+                                 "<b>Biomark Integrated O&M Site:</b>", past_iptds_sf$integrated_om_site, "</br>",
+                                 # "<b>Detection Probabilities:</b>", past_iptds_sf$detection_prob, "</br>",
+                                 # "<b>Current Funding:</b>", past_iptds_sf$current_funding, "</br>",
+                                 # "<b>BPA Funding Type:</b>", past_iptds_sf$bpa_funding, "</br>",
+                                 "<b>O&M Agency:</b>", past_iptds_sf$om_agency, "</br>",
+                                 "<b>O&M Responsibility:</b>", past_iptds_sf$om_responsibility, "</br>",
+                                 "<b>Site Description:</b>", past_iptds_sf$site_description, "</br>")) %>%
   # add a legend for integrated o&m colors
-  addLegend(data = iptds_sf,
+  addLegend(data = curr_iptds_sf,
             position = "bottomleft",
             pal = om_col,
             values = ~factor(integrated_om_site, levels = c("TRUE", "FALSE")),

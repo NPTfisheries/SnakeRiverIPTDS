@@ -5,6 +5,6 @@ account: nptfisheries
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 9299533
-bundleId: 9505835
+bundleId: 9509707
 url: https://nptfisheries.shinyapps.io/sr-iptds/
 version: 1
