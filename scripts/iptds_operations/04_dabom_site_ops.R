@@ -20,7 +20,7 @@ library(readxl)
 library(writexl)
 
 # load configuration files
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20240927.rda") ; rm(flowlines, configuration, parent_child, crb_sites_sf)
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20241226.rda") ; rm(flowlines, configuration, parent_child, crb_sites_sf)
 
 # summarize populations for each site
 dabom_site_pops = sr_site_pops %>%
