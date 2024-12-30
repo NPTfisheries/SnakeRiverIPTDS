@@ -4,7 +4,7 @@
 #   via PTAGIS API.
 # 
 # Created: August 2, 2024
-#   Last Modified: October 5, 2024
+#   Last Modified: December 30, 2024
 # 
 # Notes: 
 
@@ -20,7 +20,7 @@ library(here)
 load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
 
 # year of vtt tags to query
-yr = 2023
+yr = 2024
 
 # list of sites that were operational for the given year
 int_sites_yr = site_yrs %>%
@@ -36,9 +36,9 @@ api_key = read_table(here("keys/ma_ptagis_api_key.txt"), col_names = F) %>%
 # query virtual test tags via PTAGIS API requests
 
 # a single site and year, for example
-# vtt_df = queryTestTagSite(site_code = "ZEN",
-#                           year = 2023,
-#                           api_key = api_key)
+# vtt_df = queryTimerTagSite(site_code = "ZEN",
+#                            year = 2024,
+#                            api_key = api_key)
 
 # plot virtual test data for a single site and year, for example
 # vtt_df %>%
