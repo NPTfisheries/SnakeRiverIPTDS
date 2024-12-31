@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: November 13, 2024
+#   Last Modified: December 31, 2024
 # 
 # Notes:
 
@@ -32,7 +32,7 @@ chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
 # snake river iptds
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20241105.rda")
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20241226.rda")
 rm(configuration, parent_child, flowlines)
 
 # create sf object of dabom sites
@@ -75,7 +75,7 @@ ggplot() +
   labs(title = "Intrinsic Potential with IPTDS and Steelhead Populations") +
   theme_minimal()
 
-# plot the qrf data
+# plot the qrf data, steelhead
 ggplot() +
   geom_sf(data = qrf_sf,
           aes(color = sthd_use),
@@ -90,7 +90,7 @@ ggplot() +
   labs(title = "Redd QRF with IPTDS and Steelhead Populations") +
   theme_minimal()
 
-# plot the qrf data
+# plot the qrf data, chinook salmon
 ggplot() +
   geom_sf(data = qrf_sf,
           aes(color = chnk_use),
