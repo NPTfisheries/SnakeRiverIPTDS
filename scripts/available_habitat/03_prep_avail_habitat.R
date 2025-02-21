@@ -97,5 +97,6 @@ qrf_sf = st_read("D:/NAS/data/qrf/gitrepo_data/output/gpkg/Rch_Cap_RF_No_elev_re
 
 # save the prepped qrf dataset
 save(qrf_sf, file = here("data/spatial/snake_redd_qrf.rda"))
+#st_write(qrf_sf, here("data/spatial/prepped_snake_redd_qrf.gpkg"), layer = "prepped_ip", delete_dsn = T)
 
 ### END SCRIPT
