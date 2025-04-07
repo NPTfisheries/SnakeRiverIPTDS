@@ -48,9 +48,10 @@ recommendations_sf = read_excel(here("data/prioritization/iptds_site_recommendat
                                 sheet = "Sheet1") %>%
   filter(!site_code %in% c("EFS (Proposed)",
                            "WB1 (Proposed)",
-                           "SLT (Proposed)",
-                           # based on e-mail from wdfw 11/27/2024
-                           "ACM")) %>%
+                           "SLT (Proposed)"#,
+                           # based on e-mail from wdfw 11/27/2024; folding back in 04/07/2025
+                           #"ACM"
+                           )) %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
   
