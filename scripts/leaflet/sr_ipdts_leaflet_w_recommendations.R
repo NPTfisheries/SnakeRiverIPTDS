@@ -25,7 +25,7 @@ library(htmlwidgets)
 # compile data
 
 # maintained iptds metadata
-iptds_sf = read_excel(here("data/prioritization/Maintained Snake River IPTDS Metadata 20241211.xlsx"),
+iptds_sf = read_excel(here("data/Maintained Snake River IPTDS Metadata 20241211.xlsx"),
                       sheet = "SR_IPTDS_Sites") %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
