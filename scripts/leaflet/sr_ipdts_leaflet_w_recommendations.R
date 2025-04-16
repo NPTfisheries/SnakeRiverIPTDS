@@ -5,7 +5,7 @@
 #   upgrades, etc. to aid in planning and discussions.
 # 
 # Created: April 11, 2024
-#   Last Modified: April 8, 2025
+#   Last Modified: April 16, 2025
 # 
 # Notes: Much of this is based on a previous script iptds_planning.R from RK. This script produces the default leaflet
 #   with Snake River prioritization recommendations.
@@ -44,7 +44,7 @@ juv_iptds_sf = iptds_sf %>%
   filter(juv_detect_site != FALSE)
 
 # iptds recommendations
-recommendations_sf = read_excel(here("data/prioritization/iptds_site_recommendations_20241211.xlsx"),
+recommendations_sf = read_excel(here("data/prioritization/iptds_site_recommendations_20250409.xlsx"),
                                 sheet = "Sheet1") %>%
   filter(!site_code %in% c("EFS (Proposed)",
                            "WB1 (Proposed)",
