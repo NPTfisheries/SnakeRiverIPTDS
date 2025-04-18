@@ -4,7 +4,7 @@
 #   based on info from PTAGIS.
 # 
 # Created: April 29, 2024
-#   Last Modified: December 30, 2024
+#   Last Modified: April 18, 2025
 # 
 # Notes: 
 
@@ -18,7 +18,7 @@ library(janitor)
 library(here)
 
 # load configuration files
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20241226.rda") ; rm(configuration, flowlines, crb_sites_sf, parent_child)
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20250416.rda") ; rm(configuration, flowlines, crb_sites_sf, parent_child)
 
 # list of snake river interrogation sites
 sr_int_sites = sr_site_pops %>%
@@ -64,6 +64,7 @@ iptds_op_dates = sr_iptds_meta %>%
   # these sites don't have first_date; grabbed from PTAGIS
   mutate(first_date = if_else(site_code == "BED", as.Date("2024-02-15"), first_date)) %>%
   mutate(first_date = if_else(site_code == "CC4", as.Date("2024-08-06"), first_date)) %>%
+  mutate(first_date = if_else(site_code == "CC5", as.Date("2024-12-16"), first_date)) %>%
   mutate(first_date = if_else(site_code == "MDC", as.Date("2024-09-17"), first_date)) %>%
   mutate(first_date = if_else(site_code == "UG3", as.Date("2024-05-23"), first_date)) %>%
   mutate(first_date = if_else(site_code == "UG4", as.Date("2024-05-23"), first_date)) %>%
