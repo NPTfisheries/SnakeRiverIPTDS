@@ -1,6 +1,6 @@
 # -----------------------
 # Author: Mike Ackerman
-# Purpose: Compile some IPTDS and/or MRR data for various purposes
+# Purpose: Compile some MRR and Snake River dam data for IPTDS leaflet
 # 
 # Created: April 22, 2024
 #   Last Modified: April 16, 2025
@@ -26,6 +26,8 @@ dabom_sites = parent_child %>%
                            "PRA", "PRO", "WWB", "UMW", "JD1", "DRM", "KLR", "FID", "RCX", "LWL", "WRA")) %>%
   pull()
 
+sr_dam_codes = c("LGR", "GOA", "LMA", "IHR")
+
 mrr_sites = configuration %>%
   mutate(node = str_remove(node, "_D|_U")) %>%
   filter(node %in% dabom_sites) %>%
@@ -40,7 +42,16 @@ mrr_sites = configuration %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
 
+sr_dam_sites = configuration %>%
+  filter(site_code %in% sr_dam_codes) %>%
+  select(site_code,
+         site_name,
+         latitude,
+         longitude) %>%
+  distinct()
+
 # save dabom mrr sites
 save(mrr_sites, file = here("data/spatial/dabom_mrr_sites.rda"))
+save(sr_dam_sites, file = here("data/spatial/sr_dam_sites.rda"))
 
 ### END SCRIPT

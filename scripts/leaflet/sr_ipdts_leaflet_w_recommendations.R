@@ -5,7 +5,7 @@
 #   upgrades, etc. to aid in planning and discussions.
 # 
 # Created: April 11, 2024
-#   Last Modified: April 16, 2025
+#   Last Modified: April 18, 2025
 # 
 # Notes: Much of this is based on a previous script iptds_planning.R from RK. This script produces the default leaflet
 #   with Snake River prioritization recommendations.
@@ -25,7 +25,7 @@ library(htmlwidgets)
 # compile data
 
 # maintained iptds metadata
-iptds_sf = read_excel(here("data/Maintained Snake River IPTDS Metadata 20241211.xlsx"),
+iptds_sf = read_excel(here("data/Maintained Snake River IPTDS Metadata 20250417.xlsx"),
                       sheet = "SR_IPTDS_Sites") %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
@@ -40,8 +40,8 @@ past_iptds_sf = iptds_sf %>%
          juv_detect_site != "Proposed")
 
 # juvenile detection sites
-juv_iptds_sf = iptds_sf %>%
-  filter(juv_detect_site != FALSE)
+# juv_iptds_sf = iptds_sf %>%
+#   filter(juv_detect_site != FALSE)
 
 # iptds recommendations
 recommendations_sf = read_excel(here("data/prioritization/iptds_site_recommendations_20250409.xlsx"),
@@ -64,6 +64,9 @@ chnk_pops = spsm_pop %>%
 
 # dabom mrr sites
 load(here("data/spatial/dabom_mrr_sites.rda"))
+
+# snake river dam sites
+load(here("data/spatial/sr_dam_sites.rda"))
 
 # streams and steelhead major/minor spawning areas
 load(here("data/spatial/steelhead_gis_data.rda"))
@@ -245,27 +248,27 @@ sr_iptds_leaflet = base %>%
             group = "Integrated O&M Recommendations",
             opacity = 0.8) %>%
   # add info on juvenile detection sites
-  addCircleMarkers(data = juv_iptds_sf,
-              group = "Juvenile Obs Sites",
-              label = ~site_code,
-              fillColor = ~juv_col(juv_detect_site),
-              fillOpacity = 8,
-              color = NA,
-              opacity = 0,
-              radius = 8,
-              popup = paste("<b>Site Code:</b>", juv_iptds_sf$site_code, "</br>",
-                            "<b>Site Name:</b>", juv_iptds_sf$site_name, "</br>",
-                            "<b>Biomark Integrated O&M Site:</b>", juv_iptds_sf$integrated_om_site, "</br>")) %>%
+  # addCircleMarkers(data = juv_iptds_sf,
+  #             group = "Juvenile Obs Sites",
+  #             label = ~site_code,
+  #             fillColor = ~juv_col(juv_detect_site),
+  #             fillOpacity = 8,
+  #             color = NA,
+  #             opacity = 0,
+  #             radius = 8,
+  #             popup = paste("<b>Site Code:</b>", juv_iptds_sf$site_code, "</br>",
+  #                           "<b>Site Name:</b>", juv_iptds_sf$site_name, "</br>",
+  #                           "<b>Biomark Integrated O&M Site:</b>", juv_iptds_sf$integrated_om_site, "</br>")) %>%
   # add a legend for juvenile detection sites
-  addLegend(data = juv_iptds_sf,
-            position = "bottomleft",
-            pal = juv_col,
-            values = ~factor(juv_detect_site, levels = c("Good To Go",
-                                                         "Good w/ Upgrades",
-                                                         "Proposed")),
-            title = "Juvenile Obs Sites",
-            group = "Juvenile Obs Sites",
-            opacity = 0.8) %>%
+  # addLegend(data = juv_iptds_sf,
+  #           position = "bottomleft",
+  #           pal = juv_col,
+  #           values = ~factor(juv_detect_site, levels = c("Good To Go",
+  #                                                        "Good w/ Upgrades",
+  #                                                        "Proposed")),
+  #           title = "Juvenile Obs Sites",
+  #           group = "Juvenile Obs Sites",
+  #           opacity = 0.8) %>%
   # dabom mrr sites
   addCircles(data = mrr_sites,
              group = "DABOM MRR Sites",
@@ -276,6 +279,14 @@ sr_iptds_leaflet = base %>%
              popup = paste("<b>Site Code:</b>", mrr_sites$site_code, "</br>",
                            "<b>Site Name:</b>", mrr_sites$site_name, "</br>",
                            "<b>DABOM Node:</b>", mrr_sites$node, "</br>")) %>%
+  # snake river dam sites
+  addCircles(data = sr_dam_sites,
+             group = "Snake River Dams",
+             label = ~site_code,
+             color = "dodgerblue",
+             opacity = 1,
+             weight = 6,
+             popup = paste("<b>Site Name:</b>", sr_dam_sites$site_name, "</br>")) %>%
   # control layers
   addLayersControl(baseGroups = c("Steelhead Populations",
                                   "Steelhead Spawning Areas",
@@ -284,13 +295,15 @@ sr_iptds_leaflet = base %>%
                    overlayGroups = c("Current IPTDS Sites",
                                      "Past IPTDS Sites",
                                      "Integrated O&M Recommendations",
-                                     "Juvenile Obs Sites",
-                                     "DABOM MRR Sites"),
+                                     #"Juvenile Obs Sites",
+                                     "DABOM MRR Sites",
+                                     "Snake River Dams"),
                    options = layersControlOptions(collapsed = FALSE)) %>%
   hideGroup("Past IPTDS Sites") %>%
   hideGroup("Integrated O&M Recommendations") %>%
-  hideGroup("Juvenile Obs Sites") %>%
-  hideGroup("DABOM MRR Sites")
+  #hideGroup("Juvenile Obs Sites") %>%
+  hideGroup("DABOM MRR Sites") %>%
+  hideGroup("Snake River Dams")
 
 sr_iptds_leaflet
 
