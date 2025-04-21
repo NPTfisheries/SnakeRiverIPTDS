@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: December 31, 2024
+#   Last Modified: April 21, 2025
 # 
 # Notes:
 
@@ -12,8 +12,8 @@
 rm(list = ls())
 
 # load packages
-library(tidyverse)
 library(sf)
+library(tidyverse)
 library(here)
 library(janitor)
 library(ggrepel)
@@ -32,7 +32,7 @@ chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
 # snake river iptds
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20241226.rda")
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20250416.rda")
 rm(configuration, parent_child, flowlines)
 
 # create sf object of dabom sites
