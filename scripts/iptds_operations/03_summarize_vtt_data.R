@@ -3,7 +3,7 @@
 # Purpose: Compile and summarise virtual test tag data for all Snake River sites from PTAGIS.
 # 
 # Created: May 6, 2024
-#   Last Modified: October 7, 2024
+#   Last Modified: April 21, 2025
 # 
 # Notes: 
 
@@ -64,7 +64,7 @@ vtt_per_day = vtt_per_hr %>%
 
 # example plot for a single site and year, faceted by transceiver
 site = "ZEN"
-yr = 2023
+yr = 2024
 vtt_per_day %>%
   filter(site_code == site,
          year == yr) %>%
