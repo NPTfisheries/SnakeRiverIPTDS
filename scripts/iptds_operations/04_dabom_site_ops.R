@@ -3,7 +3,7 @@
 # Purpose: Summarize operations of sites used in DABOM.
 # 
 # Created: August 7, 2024
-#   Last Modified: January 3, 2025
+#   Last Modified: April 21, 2025
 # 
 # Notes: I need to think about how I output the results of the following without overwriting previous stuff, especially when the user fills out
 # which sites are operational each year and which sites to use to produce abundance estimates. In the future, I may do this for individual years
