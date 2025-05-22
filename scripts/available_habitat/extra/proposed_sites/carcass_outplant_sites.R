@@ -38,6 +38,9 @@ sites_sf = tribble(
   "Crooked_R", "SCUMA", "CRSFC-s", 45.82283, -115.52799,
   "Newsome_Cr", "SCUMA", "CRSFC-s", 45.82981, -115.61407,
   "Lolo_Cr", "CRLOL", "CRLOL-s", 46.37235, -116.16307,
+  "OHara_Cr", "SEMEA", "CRSEL-s", 46.08432, -115.51683,
+  "Meadow_Cr", "SEMEA", "CRSEL-s", 46.04437, -115.29690,
+  "Pete_King_Cr", "CRLOC", "CRLOC-s", 46.16643, -115.59049,
   "Lapwai_All", "CRLAP", "CRLMA-s", 46.44851, -116.81785,
   "Lapwai_Mission", "CRLAP", "CRLMA-s", 46.36907, -116.79592,
   "Sweetwater", "CRLAP", "CRLMA-s", 46.36890, -116.79456 
