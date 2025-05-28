@@ -32,7 +32,7 @@ chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
 # prep sites to be evaluated
-sites_sf = tribble(
+streams_sf = tribble(
   ~site_code, ~chnk_popid, ~sthd_popid, ~latitude, ~longitude,
   "Red_R", "SCUMA", "CRSFC-s", 45.80872, -115.47424,
   "American_R", "SCUMA", "CRSFC-s", 45.80938, -115.47569,
@@ -60,7 +60,7 @@ snake_dem = raster(paste0(ws_dir, "snake_river_10m_ned_dem.tif"))
 # begin species loop
 for (spc in c("chnk", "sthd")) {
   
-  spc_site_pops = sites_sf %>%
+  spc_site_pops = streams_sf %>%
     dplyr::select(site_code,
                   popid = starts_with(spc)) %>%
     st_drop_geometry()
@@ -138,7 +138,7 @@ for (spc in c("chnk", "sthd")) {
     } # end breach and fill depressions, create D8 flow accumulation and pointer files, extract streams loop
     
     # set pour point
-    pp = sites_sf %>%
+    pp = streams_sf %>%
       filter(site_code == site$site_code) %>%
       dplyr::select(geometry) %>%
       distinct() %>%
@@ -168,112 +168,14 @@ for (spc in c("chnk", "sthd")) {
     ws_vector_clip = st_intersection(ws_vector, poly)
     
     # write vector watershed
-    save(ws_vector_clip, file = paste0(here("output/carcass_outplant_polygons"), "/", spc, "/", site$site_code, ".rda"))
+    save(ws_vector_clip, file = paste0(here("output/carcass_outplant_study/carcass_outplant_polygons"), "/", spc, "/", site$site_code, ".rda"))
     st_write(ws_vector_clip, paste0(ws_dir, "carcass_outplant_sites/watershed_polygons/", spc, "/", site$site_code, ".shp"), quiet = TRUE, append = FALSE)
     
   } # end loop over sites
 } # end loop over species
 
-### END SCRIPT
-
-# load the prepped intrinsic potential and redd qrf datasets
-load(file = here("data/spatial/prepped_snake_ip.rda"))
-
-# pivot_longer sf to prepare for below analysis
-sites_sf_long = sites_sf %>%
-  pivot_longer(cols = c("sthd_popid", "chnk_popid"),
-               names_to = "spc_code",
-               values_to = "popid") %>%
-  mutate(spc_code = str_sub(spc_code, 1, 4))
-
-# create empty data frame to store results for each site
-site_ip_df = NULL
-for (s in 1:nrow(sites_sf_long)) {
-  
-  # grab the site_code, spc_code, and polygons for each combination
-  site_code = sites_sf_long[s,] %>% pull(site_code)
-  spc_code  = sites_sf_long[s,] %>% pull(spc_code)
-  
-  site_poly = get(load(paste0(here("output/carcass_outplant_polygons"), "/", spc_code, "/", site_code, ".rda")))
-
-  cat(paste0("Estimating available habitat above site ", site_code, ", ", spc_code, ".\n"))
-  
-  # summarize intrinsic potential habitat for each site polygon
-  site_ip = ip_sf %>%
-    st_intersection(site_poly) %>%
-    st_drop_geometry() %>%
-    {
-      if (spc_code == "chnk") {
-        summarise(., 
-                  ip_length_w = sum(length_w_chnk, na.rm = TRUE),
-                  ip_length_w_curr = sum(if_else(currchnk > 0, length_w_chnk, 0), na.rm = TRUE),
-                  .groups = "drop")
-      } else if (spc_code == "sthd") {
-        summarise(., 
-                  ip_length_w = sum(length_w_sthd, na.rm = TRUE),
-                  ip_length_w_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = TRUE),
-                  .groups = "drop")
-      }
-    } %>%
-    mutate(site_code = site_code,
-           spc_code = spc_code)
-  
-  # join the ip and qrf summaries for each site
-  # site_ip_qrf = left_join(site_ip, site_qrf, by = c("site_code", "spc_code")) %>%
-  #   dplyr::select(site_code, spc_code, everything())
-  
-  # append ip results to site_ip_df
-  site_ip_df = bind_rows(site_ip_df, site_ip)
-  
-} # end site loop
-
-# get available habitat for populations
-load(here("output/available_habitat/snake_river_iptds_and_pop_available_habitat.rda")) ; rm(site_avail_hab, avail_hab_df)
-
-#--------------------
-# escapement goals
-esc_goal_df = tribble(
-  ~popid, ~low, ~med, ~high,
-  "CRLAP", 750, 1875, 3000, 
-  "SCLAW", 500, 1250, 2000,
-  "SCUMA",1000, 2500, 4000,
-  "CRLOL", 500, 1250, 2000,
-  "CRLOC",1000, 2500, 4000,
-  "SEMEA", 500, 1250, 2000,
-  "CRLMA-s", 1500, 4500, 7500,
-  "CRSFC-s", 1000, 3000, 5000,
-  "CRLOL-s",  500, 1500, 2500,
-  "CRLOC-s", 1000, 3000, 5000,
-  "CRSEL-s", 1000, 3000, 5000
-)
-
-# join and summarize site and population available habitat
-p_ip_df = site_ip_df %>%
-  left_join(sites_sf_long,
-            by = c("site_code", "spc_code")) %>%
-  dplyr::select(site_code,
-                spc_code,
-                popid,
-                site_ip_length_w = ip_length_w) %>%
-  left_join(pop_avail_hab %>%
-              dplyr::select(spc_code,
-                            popid,
-                            pop_ip_length_w = ip_length_w),
-            by = c("spc_code", "popid")) %>%
-  mutate(p_ip = site_ip_length_w / pop_ip_length_w) %>%
-  left_join(esc_goal_df %>%
-              dplyr::select(popid,
-                            high)) %>%
-  mutate(est_hist_abund = p_ip * high) %>%
-  dplyr::select(site_code,
-                spc_code,
-                popid,
-                high_esc_goal = high,
-                p_ip,
-                est_hist_abund)
-
-# write results
-write_csv(p_ip_df,
-          file = here("output/available_habitat/carcass_outplant_streams.csv"))
+# save streams_sf data frame
+save(streams_sf,
+     file = here("output/carcass_outplant_study/carcass_study_streams.rda"))
 
 ### END SCRIPT
