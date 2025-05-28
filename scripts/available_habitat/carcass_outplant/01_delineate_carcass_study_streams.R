@@ -1,6 +1,7 @@
 # -----------------------
 # Author: Mike Ackerman
-# Purpose: Estimate historical production of candidate streams for carcass outplant study
+# Purpose: Prepare watershed polygons of carcass outplant streams for later intrinsic productivity
+#   analyses.
 # 
 # Created: May 8, 2025
 #   Last Modified: May 28, 2025
@@ -172,6 +173,8 @@ for (spc in c("chnk", "sthd")) {
     
   } # end loop over sites
 } # end loop over species
+
+### END SCRIPT
 
 # load the prepped intrinsic potential and redd qrf datasets
 load(file = here("data/spatial/prepped_snake_ip.rda"))
