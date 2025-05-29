@@ -12,6 +12,8 @@ rm(list = ls())
 
 # load necessary packages
 library(here)
+library(tidyverse)
+library(sf)
 
 # load carcass study streams
 load(file = here("output/carcass_outplant_study/carcass_study_streams.rda"))
@@ -153,8 +155,8 @@ treatment_kg_df = carcass_ip_df %>%
     site_code %in% c("American_R", "Meadow_Cr_SFCW", "OHara_Cr", "Big_Canyon_Cr") ~ "C"
   )) %>%
   mutate(treatment_p = case_when(
-    treatment == "TH" ~ 2,
-    treatment == "TL" ~ 1,
+    treatment == "TH" ~ 2.5,
+    treatment == "TL" ~ 1.25,
     treatment == "C"  ~ 0
   ),
   treatment_kg = est_hist_kg * treatment_p,
