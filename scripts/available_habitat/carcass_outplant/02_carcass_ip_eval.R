@@ -120,8 +120,8 @@ carcass_ip_df = streams_ip_df %>%
             by = join_by(popid)) %>%
   mutate(est_hist_n = high * p_ip,
          est_hist_kg = case_when(
-           spc_code == "chnk" ~ est_hist_n * 5,
-           spc_code == "sthd" ~ est_hist_n * 3.48,
+           spc_code == "chnk" ~ est_hist_n * 2.72,
+           spc_code == "sthd" ~ est_hist_n * 1.89,
            TRUE ~ est_hist_n * NA
          ),
          kg_per_total_m2 = est_hist_kg / tot_area_m2,
