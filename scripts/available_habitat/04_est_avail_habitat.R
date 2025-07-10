@@ -57,7 +57,6 @@ sr_int_sites_sf = sr_site_pops %>%
 
 # load the prepped intrinsic potential and redd qrf datasets
 load(file = here("data/spatial/prepped_snake_ip.rda"))
-
 qrf_sf = get(load(file = here("data/spatial/snake_redd_qrf.rda")))
 
 # plot the intrinsic potential data
@@ -150,19 +149,20 @@ for (s in 1:nrow(sr_int_sites_sf)) {
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
-        #filter(., chnk == TRUE & !is.na(chnk_use)) %>%
         filter(., chnk == TRUE & chnk_use == "Spawning and rearing") %>%
         summarise(.,
                   qrf_length_m = sum(reach_leng_m),
                   qrf_n = sum(chnk_per_m * reach_leng_m),
-                  qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
+                  #qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
+                  qrf_n_se = sqrt(sum(c(chnk_per_m_se * reach_leng_m)^2)),
                   .groups = "drop")
       } else if (spc_code == "sthd") {
         filter(., sthd == TRUE & sthd_use == "Spawning and rearing") %>%
         summarise(.,
                   qrf_length_m = sum(reach_leng_m),
                   qrf_n = sum(sthd_per_m * reach_leng_m),
-                  qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
+                  #qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
+                  qrf_n_se = sqrt(sum(c(sthd_per_m_se * reach_leng_m)^2)),
                   .groups = "drop")
       }
     } %>%
@@ -272,14 +272,16 @@ for (p in 1:nrow(pop_df)) {
         summarise(.,
                   qrf_length_m = sum(reach_leng_m),
                   qrf_n = sum(chnk_per_m * reach_leng_m),
-                  qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
+                  #qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
+                  qrf_n_se = sqrt(sum(c(chnk_per_m_se * reach_leng_m)^2)),
                   .groups = "drop")
       } else if (spc_code == "sthd") {
         filter(., sthd == TRUE & sthd_use == "Spawning and rearing") %>%
         summarise(.,
                   qrf_length_m = sum(reach_leng_m),
                   qrf_n = sum(sthd_per_m * reach_leng_m),
-                  qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
+                  #qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
+                  qrf_n_se = sqrt(sum(c(sthd_per_m_se * reach_leng_m)^2)),
                   .groups = "drop")
       }
     } %>%
@@ -314,12 +316,23 @@ avail_hab_df = site_avail_hab %>%
                      pop_qrf_n = qrf_n,
                      pop_qrf_n_se = qrf_n_se),
             by = c("spc_code", "popid")) %>%
+  rowwise() %>%
   mutate(
     p_ip_length_w_curr = site_ip_length_w_curr / pop_ip_length_w_curr,
-    p_qrf_n = site_qrf_n / pop_qrf_n,
+    p_qrf_n = case_when(
+      site_qrf_n == 0 & pop_qrf_n == 0 ~ 0, 
+      TRUE ~ site_qrf_n / pop_qrf_n
+    ),
     # standard error of the proportion using the delta method
-    p_qrf_n_se = p_qrf_n * sqrt((site_qrf_n_se / site_qrf_n)^2 + (pop_qrf_n_se / pop_qrf_n)^2)
+    #p_qrf_n_se = p_qrf_n * sqrt((site_qrf_n_se / site_qrf_n)^2 + (pop_qrf_n_se / pop_qrf_n)^2),
+    p_qrf_n_se = case_when(
+      site_qrf_n_se == 0 & pop_qrf_n_se == 0 ~ 0,
+      TRUE ~ msm::deltamethod( ~ x1 / x2, 
+                              mean = c(site_qrf_n, pop_qrf_n), 
+                              cov = diag(c(site_qrf_n_se, pop_qrf_n_se)^2))
+    )
   ) %>%
+  ungroup() %>%
   select(site_code,
          spc_code,
          popid,
