@@ -320,7 +320,7 @@ avail_hab_df = site_avail_hab %>%
   mutate(
     p_ip = site_ip_length_w_curr / pop_ip_length_w_curr,
     p_qrf = case_when(
-      site_qrf_n == 0 & pop_qrf_n == 0 ~ 0, 
+      site_qrf_n == 0 & pop_qrf_n == 0 ~ 1, # qrf suggests no habitat, so let's not expand 
       TRUE ~ site_qrf_n / pop_qrf_n
     ),
     # standard error of the proportion using the delta method
@@ -345,6 +345,17 @@ avail_hab_df = site_avail_hab %>%
          pop_qrf_n_se,
          p_qrf,
          p_qrf_se)
+
+# plot correlation btw standard errors
+# ggplot(avail_hab_df, aes(x = pop_qrf_n_se, y = site_qrf_n_se)) +
+#   geom_point(aes(color = p_qrf), alpha = 0.7) +
+#   geom_smooth(method = "lm", se = TRUE, color = "black", linetype = "dashed") +
+#   scale_color_viridis_c(option = "plasma", name = "p_qrf") +
+#   labs(
+#     x = "Population QRF Standard Error",
+#     y = "Site QRF Standard Error"
+#   ) +
+#   theme_minimal()
 
 # save the important objects
 save(site_avail_hab,
