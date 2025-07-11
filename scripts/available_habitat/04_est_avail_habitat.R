@@ -319,13 +319,13 @@ avail_hab_df = site_avail_hab %>%
   rowwise() %>%
   mutate(
     p_ip_length_w_curr = site_ip_length_w_curr / pop_ip_length_w_curr,
-    p_qrf_n = case_when(
+    p_qrf = case_when(
       site_qrf_n == 0 & pop_qrf_n == 0 ~ 0, 
       TRUE ~ site_qrf_n / pop_qrf_n
     ),
     # standard error of the proportion using the delta method
-    #p_qrf_n_se = p_qrf_n * sqrt((site_qrf_n_se / site_qrf_n)^2 + (pop_qrf_n_se / pop_qrf_n)^2),
-    p_qrf_n_se = case_when(
+    p_qrf_se = case_when(
+      p_qrf == 1 ~ 0, # if full population monitoring, let's not propagate further uncertainty into expanded population estimates
       site_qrf_n_se == 0 & pop_qrf_n_se == 0 ~ 0,
       TRUE ~ msm::deltamethod( ~ x1 / x2, 
                               mean = c(site_qrf_n, pop_qrf_n), 
@@ -343,8 +343,8 @@ avail_hab_df = site_avail_hab %>%
          site_qrf_n_se,
          pop_qrf_n,
          pop_qrf_n_se,
-         p_qrf_n,
-         p_qrf_n_se)
+         p_qrf,
+         p_qrf_se)
 
 # save the important objects
 save(site_avail_hab,
