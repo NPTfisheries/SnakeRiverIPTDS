@@ -318,7 +318,7 @@ avail_hab_df = site_avail_hab %>%
             by = c("spc_code", "popid")) %>%
   rowwise() %>%
   mutate(
-    p_ip_length_w_curr = site_ip_length_w_curr / pop_ip_length_w_curr,
+    p_ip = site_ip_length_w_curr / pop_ip_length_w_curr,
     p_qrf = case_when(
       site_qrf_n == 0 & pop_qrf_n == 0 ~ 0, 
       TRUE ~ site_qrf_n / pop_qrf_n
@@ -338,7 +338,7 @@ avail_hab_df = site_avail_hab %>%
          popid,
          site_ip_length_w_curr,
          pop_ip_length_w_curr,
-         p_ip_length_w_curr,
+         p_ip,
          site_qrf_n,
          site_qrf_n_se,
          pop_qrf_n,
