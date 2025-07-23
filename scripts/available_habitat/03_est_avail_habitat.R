@@ -4,9 +4,9 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: April 21, 2025
+#   Last Modified: July 23, 2025
 # 
-# Notes:
+# Notes: Consider moving pop_avail_hab section to SnakeRiverFishHabitat and port that object over from there
 
 # clear environment
 rm(list = ls())
@@ -56,8 +56,8 @@ sr_int_sites_sf = sr_site_pops %>%
   filter(!is.na(popid))
 
 # load the prepped intrinsic potential and redd qrf datasets
-load(file = here("data/spatial/prepped_snake_ip.rda"))
-qrf_sf = get(load(file = here("data/spatial/snake_redd_qrf.rda")))
+load(file = "../SnakeRiverAvailHab/output/prepped_snake_ip.rda")
+qrf_sf = get(load(file = "../SnakeRiverAvailHab/output/prepped_snake_redd_qrf.rda"))
 
 # plot the intrinsic potential data
 ggplot() +
