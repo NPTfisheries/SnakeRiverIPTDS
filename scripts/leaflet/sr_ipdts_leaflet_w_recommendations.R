@@ -5,7 +5,7 @@
 #   upgrades, etc. to aid in planning and discussions.
 # 
 # Created: April 11, 2024
-#   Last Modified: April 18, 2025
+#   Last Modified: July 24, 2025
 # 
 # Notes: Much of this is based on a previous script iptds_planning.R from RK. This script produces the default leaflet
 #   with Snake River prioritization recommendations.
@@ -25,7 +25,7 @@ library(htmlwidgets)
 # compile data
 
 # maintained iptds metadata
-iptds_sf = read_excel(here("data/Maintained Snake River IPTDS Metadata 20250417.xlsx"),
+iptds_sf = read_excel(here("data/Maintained Snake River IPTDS Metadata 20250724.xlsx"),
                       sheet = "SR_IPTDS_Sites") %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
