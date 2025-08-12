@@ -56,8 +56,8 @@ sr_int_sites_sf = sr_site_pops %>%
   filter(!is.na(popid))
 
 # load the prepped intrinsic potential and redd qrf datasets
-load(file = "../SnakeRiverAvailHab/output/prepped_snake_ip.rda")
-qrf_sf = get(load(file = "../SnakeRiverAvailHab/output/prepped_snake_redd_qrf.rda"))
+load(file = "../SnakeRiverFishHabitat/output/prepped_snake_ip.rda")
+qrf_sf = get(load(file = "../SnakeRiverFishHabitat/output/prepped_snake_redd_qrf.rda"))
 
 # plot the intrinsic potential data
 ggplot() +
@@ -364,8 +364,8 @@ save(site_avail_hab,
      file = here("output/available_habitat/snake_river_iptds_and_pop_available_habitat.rda"))
 
 # explore differences in proportions of IP and QRF Redd Habitat
-ggplot(avail_hab_df, aes(x = p_qrf_n, 
-                         y = p_ip_length_w_curr,
+ggplot(avail_hab_df, aes(x = p_qrf, 
+                         y = p_ip,
                          color = spc_code)) +
   geom_point() + 
   geom_abline(a = 0, b = 1) +
