@@ -4,7 +4,7 @@
 #   More details to come later.
 # 
 # Created: July 22, 2024
-#   Last Modified: April 21, 2025
+#   Last Modified: August 21, 2025
 # 
 # Notes:
 
@@ -154,6 +154,7 @@ for (spc in c("chnk", "sthd")) {
     if(site$site_code == "BHC")    { loc = c(755989, 5000575) }
     if(site$site_code == "BTL")    { loc = c(787510, 4955448) }
     if(site$site_code == "CCW")    { loc = c(434932, 5004593) }
+    if(site$site_code == "COU")    { loc = c(502541, 5116818) }
     if(site$site_code == "ESS")    { loc = c(615717, 4979148) }
     if(site$site_code == "HEC")    { loc = c(792429, 4952633) }
     if(site$site_code == "HYC")    { loc = c(765989, 4973079) }
@@ -162,7 +163,7 @@ for (spc in c("chnk", "sthd")) {
     if(site$site_code == "UGR" & spc == "chnk") { loc = c(428809, 5045476)}
     if(site$site_code == "VC1")    { loc = c(664480, 4898268) }
     if(site$site_code == "WB1")    { loc = c(554055, 5067449) }
-    
+
     # if loc != coordinates of pp, update coordinates
     if(any(loc == coordinates(pp)) == FALSE) {
       centroid = colMeans(coordinates(pp))
