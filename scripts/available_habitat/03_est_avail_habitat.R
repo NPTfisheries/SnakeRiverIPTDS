@@ -272,7 +272,6 @@ for (p in 1:nrow(pop_df)) {
         summarise(.,
                   qrf_length_m = sum(reach_leng_m),
                   qrf_n = sum(chnk_per_m * reach_leng_m),
-                  #qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
                   qrf_n_se = sqrt(sum(c(chnk_per_m_se * reach_leng_m)^2)),
                   .groups = "drop")
       } else if (spc_code == "sthd") {
@@ -280,7 +279,6 @@ for (p in 1:nrow(pop_df)) {
         summarise(.,
                   qrf_length_m = sum(reach_leng_m),
                   qrf_n = sum(sthd_per_m * reach_leng_m),
-                  #qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
                   qrf_n_se = sqrt(sum(c(sthd_per_m_se * reach_leng_m)^2)),
                   .groups = "drop")
       }
