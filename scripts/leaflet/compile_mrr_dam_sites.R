@@ -3,7 +3,7 @@
 # Purpose: Compile some MRR and Snake River dam data for IPTDS leaflet
 # 
 # Created: April 22, 2024
-#   Last Modified: April 18, 2025
+#   Last Modified: January 9, 2026
 # 
 # Notes: 
 
@@ -16,7 +16,7 @@ library(here)
 library(sf)
 
 # dabom mrr sites
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20250416.rda") ; rm(flowlines)
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260109.rda") ; rm(flowlines)
 dabom_sites = parent_child %>%
   unlist() %>%
   unique() %>%
