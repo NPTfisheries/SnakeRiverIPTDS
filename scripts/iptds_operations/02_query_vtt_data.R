@@ -4,7 +4,7 @@
 #   via PTAGIS API.
 # 
 # Created: August 2, 2024
-#   Last Modified: April 18, 2025
+#   Last Modified: January 9, 2026
 # 
 # Notes: 
 
@@ -20,7 +20,7 @@ library(here)
 load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
 
 # year of vtt tags to query
-yr = 2024
+yr = 2025
 
 # list of sites that were operational for the given year
 int_sites_yr = site_yrs %>%
