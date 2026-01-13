@@ -3,7 +3,7 @@
 # Purpose: Compile and summarise virtual test tag data for all Snake River sites from PTAGIS.
 # 
 # Created: May 6, 2024
-#   Last Modified: April 21, 2025
+#   Last Modified: January 13, 2026
 # 
 # Notes: 
 
@@ -12,13 +12,12 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(here)
 
 #------------------------------
 # summarize queried VTT data
 
 # read in and combine virtual test tag data
-vtt_df = list.files(path = here("data/virtual_test_tags/"),
+vtt_df = list.files(path = "data/virtual_test_tags/",
                     pattern = "\\.rds$",
                     recursive = T,
                     full.names = T) %>%
@@ -29,7 +28,7 @@ vtt_df = list.files(path = here("data/virtual_test_tags/"),
 # summarize the number of vtt reads per hour by site, year, and antenna
 vtt_per_hr = vtt_df %>%
   # round each time stamp down to the nearest hour
-  mutate(time_stamp = floor_date(time_stamp, "hour")) %>%
+  mutate(time_stamp = floor_date(time_stamp, "hour")) %>%        
   # count the number of vtt reads within each hour, per antenna
   group_by(site_code,
            year,
@@ -64,7 +63,7 @@ vtt_per_day = vtt_per_hr %>%
 
 # example plot for a single site and year, faceted by transceiver
 site = "ZEN"
-yr = 2024
+yr = 2025
 vtt_per_day %>%
   filter(site_code == site,
          year == yr) %>%
@@ -168,7 +167,7 @@ vtt_summ = vtt_per_day %>%
 
 # save virtual test tag summary
 save(vtt_summ,
-     file = here("output/iptds_operations/ptagis_virtual_test_tags_summary.rda"))
+     file = "output/iptds_operations/ptagis_virtual_test_tags_summary.rda")
 
 # plot vtt summaries by site and year
 sites = unique(vtt_summ$site_code)
@@ -193,7 +192,7 @@ for(s in sites) {
 
 # save site vtt summary plot to .pdf
 all_sites_p = gridExtra::marrangeGrob(plot_list, nrow = 8, ncol = 1)
-ggsave(paste0(here("output/figures/iptds_operations/site_vtt_summary_"), Sys.Date(), ".pdf"),
+ggsave(paste0("output/figures/iptds_operations/site_vtt_summary_", Sys.Date(), ".pdf"),
        all_sites_p,
        width = 8.5,
        height = 14,
