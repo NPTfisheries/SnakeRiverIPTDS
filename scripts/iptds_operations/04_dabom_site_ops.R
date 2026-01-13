@@ -3,7 +3,7 @@
 # Purpose: Summarize operations of sites used in DABOM.
 # 
 # Created: August 7, 2024
-#   Last Modified: April 21, 2025
+#   Last Modified: January 13, 2026
 # 
 # Notes: I need to think about how I output the results of the following without overwriting previous stuff, especially when the user fills out
 # which sites are operational each year and which sites to use to produce abundance estimates. In the future, I may do this for individual years
@@ -14,13 +14,12 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(here)
 library(sf)
 library(readxl)
 library(writexl)
 
 # load configuration files
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20250416.rda") ; rm(flowlines, configuration, parent_child, crb_sites_sf)
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260109.rda") ; rm(flowlines, configuration, parent_child, crb_sites_sf)
 
 # summarize populations for each site
 dabom_site_pops = sr_site_pops %>%
@@ -39,8 +38,8 @@ dabom_site_pops = sr_site_pops %>%
   st_drop_geometry()
 
 # load site operations datasets
-load(here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
-load(here("output/iptds_operations/ptagis_virtual_test_tags_summary.rda"))
+load("output/iptds_operations/ptagis_iptds_operational_dates.rda")
+load("output/iptds_operations/ptagis_virtual_test_tags_summary.rda")
 
 # summarize dabom site operations by species, site, and spawn year
 dabom_int_ops = ptagis_ops %>%
@@ -167,6 +166,6 @@ dabom_ops = bind_rows(dabom_int_ops, dabom_mrr_ops) %>%
   arrange(site_code, species, popid, spawn_year)
 
 # write dabom site operations summary to excel file
-write_xlsx(dabom_ops, path = paste0(here("output/iptds_operations/dabom_site_operations_"), Sys.Date(), ".xlsx"))
+write_xlsx(dabom_ops, path = paste0("output/iptds_operations/dabom_site_operations_", Sys.Date(), ".xlsx"))
 
 ### END SCRIPT

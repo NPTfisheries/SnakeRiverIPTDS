@@ -62,7 +62,7 @@ vtt_per_day = vtt_per_hr %>%
             .groups = "drop")
 
 # example plot for a single site and year, faceted by transceiver
-site = "ZEN"
+site = "CCW"
 yr = 2025
 vtt_per_day %>%
   filter(site_code == site,
