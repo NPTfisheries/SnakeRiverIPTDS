@@ -3,7 +3,7 @@
 # Purpose: Compile and summarise virtual test tag data for all Snake River sites from PTAGIS.
 # 
 # Created: May 6, 2024
-#   Last Modified: January 13, 2026
+#   Last Modified: January 14, 2026
 # 
 # Notes: 
 
@@ -23,7 +23,8 @@ vtt_df = list.files(path = "data/virtual_test_tags/",
                     full.names = T) %>%
   map(readRDS) %>%
   map_dfr(bind_rows) %>%
-  mutate(year = year(time_stamp)) 
+  mutate(year = year(time_stamp),
+         site_code = if_else(site_code == "3BV", "BV3", site_code)) 
 
 # summarize the number of vtt reads per hour by site, year, and antenna
 vtt_per_hr = vtt_df %>%
@@ -62,7 +63,7 @@ vtt_per_day = vtt_per_hr %>%
             .groups = "drop")
 
 # example plot for a single site and year, faceted by transceiver
-site = "CCW"
+site = "BV3"
 yr = 2025
 vtt_per_day %>%
   filter(site_code == site,

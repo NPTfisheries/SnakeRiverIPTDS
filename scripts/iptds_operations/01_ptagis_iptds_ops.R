@@ -4,7 +4,7 @@
 #   based on info from PTAGIS.
 # 
 # Created: April 29, 2024
-#   Last Modified: January 9, 2026
+#   Last Modified: January 14, 2026
 # 
 # Notes: 
 
@@ -15,7 +15,6 @@ rm(list = ls())
 library(tidyverse)
 library(PITcleanr)
 library(janitor)
-library(here)
 
 # load configuration files
 load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260109.rda") ; rm(configuration, flowlines, crb_sites_sf, parent_child)
@@ -28,6 +27,7 @@ sr_int_sites = sr_site_pops %>%
 # snake river interrogation site metadata
 sr_iptds_meta = queryInterrogationMeta() %>%
   clean_names() %>%
+  mutate(site_code = if_else(site_code == "3BV", "BV3", site_code)) %>%
   filter(site_code %in% sr_int_sites) %>%
   select(site_code,
          name,
@@ -62,6 +62,7 @@ iptds_op_dates = sr_iptds_meta %>%
   mutate(first_date = as.Date(first_date),
          last_date = as.Date(last_date)) %>%
   # these sites don't have first_date; grabbed from PTAGIS
+  mutate(first_date = if_else(site_code == "BV3", as.Date("2025-08-20"), first_date)) %>%
   mutate(first_date = if_else(site_code == "CC5", as.Date("2024-12-16"), first_date)) %>%
   mutate(first_date = if_else(site_code == "EVM", as.Date("2024-11-16"), first_date)) %>%
   mutate(first_date = if_else(site_code == "WH1", as.Date("2025-01-22"), first_date)) %>%
@@ -134,10 +135,10 @@ ptagis_ops = iptds_op_dates %>%
 # save iptds operational dates data frame
 save(site_yrs,
      ptagis_ops,
-     file = here("output/iptds_operations/ptagis_iptds_operational_dates.rda"))
+     file = "output/iptds_operations/ptagis_iptds_operational_dates.rda")
 
 # which iptds sites are in biologic?
-source(here("keys/biologic_login.txt"))
+source("keys/biologic_login.txt")
 #remotes::install_github("ryankinzer/fisheR")
 library(fisheR)
 biologic_login(email, password)

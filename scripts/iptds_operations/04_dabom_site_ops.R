@@ -95,7 +95,8 @@ tags_by_site = list.files(path = "C:/Git/SnakeRiverFishStatus/data/complete_tag_
   # add species and spawn year
   mutate(file_name = str_replace(file_name, ".*/", ""), 
          species = str_extract(file_name, "(?<=_)[^_]+"),       
-         spawn_year = str_extract(file_name, "SY[0-9]{4}")) %>%
+         spawn_year = str_extract(file_name, "SY[0-9]{4}"),
+         `Event Site Code Value` = if_else(`Event Site Code Value` == "3BV", "BV3", `Event Site Code Value`)) %>%
   select(-file_name) %>%
   # summarize number of unique tags observed by site
   select(species,

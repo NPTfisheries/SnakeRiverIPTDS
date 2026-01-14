@@ -4,7 +4,7 @@
 #   via PTAGIS API.
 # 
 # Created: August 2, 2024
-#   Last Modified: January 9, 2026
+#   Last Modified: January 14, 2026
 # 
 # Notes: 
 
@@ -26,6 +26,7 @@ yr = 2025
 int_sites_yr = site_yrs %>%
   filter(year == yr) %>%
   select(site_code) %>%
+  mutate(site_code = if_else(site_code == "BV3", "3BV", site_code)) %>%
   pull()
 
 # set api key
