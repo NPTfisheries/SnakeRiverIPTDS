@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: July 23, 2025
+#   Last Modified: January 15, 2025
 # 
 # Notes: Consider moving pop_avail_hab section to SnakeRiverFishHabitat and port that object over from there
 
@@ -14,7 +14,6 @@ rm(list = ls())
 # load packages
 library(sf)
 library(tidyverse)
-library(here)
 library(janitor)
 library(ggrepel)
 
@@ -25,15 +24,46 @@ default_crs = st_crs(32611) # WGS 84, UTM zone 11N
 # load and prep data
 
 # ictrt population polygons
-load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
+load("data/spatial/SR_pops.rda") ; rm(fall_pop)
 sthd_pops = sth_pop %>%
   st_transform(default_crs) ; rm(sth_pop)
 chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
 # snake river iptds
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20250416.rda")
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260109.rda")
 rm(configuration, parent_child, flowlines)
+
+# path to all configuration files used SY2010 - present
+config_files = list.files(
+  path = "C:/Git/SnakeRiverFishStatus/data/configuration_files",
+  pattern = "\\.rda$",
+  full.names = TRUE
+)
+
+# following ensures we get sites from all current and past configurations
+source("R/read_obj_from_rda.R")
+sr_site_pops = config_files %>%
+  tibble(path = .) %>%
+  mutate(file = basename(path),
+         config_date = as.Date(str_match(file, "(\\d{8})\\.rda$")[, 2], format = "%Y%m%d")) %>%
+  mutate(sr_site_pops = map(path, ~ read_obj_from_rda(.x, "sr_site_pops"))) %>%
+  filter(!map_lgl(sr_site_pops, is.null)) %>%
+  mutate(sr_site_pops = map(sr_site_pops, ~ st_transform(.x, crs = default_crs))) %>%
+  mutate(sr_site_pops = map2(sr_site_pops, config_date, ~ mutate(.x, config_date = .y))) %>%
+  pull(sr_site_pops) %>%
+  bind_rows() %>%
+  group_by(site_code) %>%
+  filter(config_date == max(config_date, na.rm = TRUE)) %>%  # keep newest config per site_code
+  ungroup() %>%
+  arrange(site_code, desc(config_date))
+
+crb_sites_sf = config_files %>%
+  map(~ read_obj_from_rda(.x, "crb_sites_sf")) %>%
+  compact() %>%
+  map(~ st_transform(.x, crs = default_crs)) %>%
+  bind_rows() %>%
+  distinct(site_code, .keep_all = T)
 
 # create sf object of dabom sites
 sr_int_sites_sf = sr_site_pops %>%
@@ -43,7 +73,7 @@ sr_int_sites_sf = sr_site_pops %>%
          chnk_popid) %>%
   filter(site_type == "INT") %>%
   st_join(crb_sites_sf %>%
-            select(rkm),
+            dplyr::select(rkm),
           by = "site_code") %>%
   # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
   filter(str_detect(rkm, "^522\\.")) %>%
@@ -115,7 +145,7 @@ for (s in 1:nrow(sr_int_sites_sf)) {
   site_code = sr_int_sites_sf[s,] %>% pull(site_code)
   spc_code  = sr_int_sites_sf[s,] %>% pull(spc_code)
   
-  site_poly = get(load(paste0(here("output/iptds_polygons"), "/", spc_code, "/", site_code, ".rda")))
+  site_poly = get(load(paste0("output/iptds_polygons", "/", spc_code, "/", site_code, ".rda")))
   
   cat(paste0("Estimating available habitat above site ", site_code, ", ", spc_code, ".\n"))
   
@@ -344,22 +374,11 @@ avail_hab_df = site_avail_hab %>%
          p_qrf,
          p_qrf_se)
 
-# plot correlation btw standard errors
-# ggplot(avail_hab_df, aes(x = pop_qrf_n_se, y = site_qrf_n_se)) +
-#   geom_point(aes(color = p_qrf), alpha = 0.7) +
-#   geom_smooth(method = "lm", se = TRUE, color = "black", linetype = "dashed") +
-#   scale_color_viridis_c(option = "plasma", name = "p_qrf") +
-#   labs(
-#     x = "Population QRF Standard Error",
-#     y = "Site QRF Standard Error"
-#   ) +
-#   theme_minimal()
-
 # save the important objects
 save(site_avail_hab,
      pop_avail_hab,
      avail_hab_df,
-     file = here("output/available_habitat/snake_river_iptds_and_pop_available_habitat.rda"))
+     file = "output/available_habitat/snake_river_iptds_and_pop_available_habitat.rda")
 
 # explore differences in proportions of IP and QRF Redd Habitat
 ggplot(avail_hab_df, aes(x = p_qrf, 
@@ -387,7 +406,7 @@ pop_avail_hab %>%
        title = "Scatterplot of available IP vs. QRF habitat using their respective spatial extents.") +
   theme_minimal()
 
-ggsave(here("output/figures/available_habitat/pop_ip_vs_qrf.png"),
+ggsave("output/figures/available_habitat/pop_ip_vs_qrf.png",
        width = 11,
        height = 8,
        dpi = 300)

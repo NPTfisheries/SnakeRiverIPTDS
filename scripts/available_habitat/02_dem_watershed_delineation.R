@@ -1,10 +1,10 @@
 # -----------------------
 # Author: Mike Ackerman
-# Purpose: Draft script to delineate watersheds using a prepped DEM. 
+# Purpose: Draft script to delineate watersheds upstream of IPTDS using a prepped DEM. 
 #   More details to come later.
 # 
 # Created: July 22, 2024
-#   Last Modified: August 21, 2025
+#   Last Modified: January 15, 2026
 # 
 # Notes:
 
@@ -14,7 +14,6 @@ rm(list = ls())
 # load necessary packages
 library(tidyverse)
 library(sf)
-library(here)
 library(raster)
 #install.packages("whitebox", repos = "http://R-Forge.R-project.org")
 library(whitebox)
@@ -28,11 +27,15 @@ default_crs = st_crs(32611)               # set default crs: WGS 84, UTM zone 11
 # load and prep data
 
 # snake river iptds
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20250416.rda")
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260109.rda")
 rm(configuration, parent_child, flowlines)
 
+# need these in WGS84, UTM zone 11 for delineation
+crb_sites_sf = crb_sites_sf %>% st_transform(default_crs)
+sr_site_pops = sr_site_pops %>% st_transform(default_crs)
+
 # ictrt population polygons
-load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
+load("data/spatial/SR_pops.rda") ; rm(fall_pop)
 sthd_pops = sth_pop %>%
   st_transform(default_crs) ; rm(sth_pop)
 chnk_pops = spsm_pop %>%
@@ -42,9 +45,10 @@ chnk_pops = spsm_pop %>%
 sr_int_site_sf = sr_site_pops %>%
   dplyr::select(site_code, site_type, sthd_popid, chnk_popid) %>%
   filter(site_type == "INT") %>%
-  st_join(crb_sites_sf %>%
-              dplyr::select(rkm),
-          by = "site_code") %>%
+  st_join(
+    crb_sites_sf %>% dplyr::select(rkm),
+    join = st_intersects
+  ) %>%
   # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
   filter(str_detect(rkm, "^522\\.")) %>%
   filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173)
@@ -163,6 +167,7 @@ for (spc in c("chnk", "sthd")) {
     if(site$site_code == "UGR" & spc == "chnk") { loc = c(428809, 5045476)}
     if(site$site_code == "VC1")    { loc = c(664480, 4898268) }
     if(site$site_code == "WB1")    { loc = c(554055, 5067449) }
+    if(site$site_code == "WH1")    { loc = c(475947, 5029987) }
 
     # if loc != coordinates of pp, update coordinates
     if(any(loc == coordinates(pp)) == FALSE) {
@@ -195,7 +200,7 @@ for (spc in c("chnk", "sthd")) {
     ws_vector_clip = st_intersection(ws_vector, poly)
     
     # write vector watershed
-    save(ws_vector_clip, file = paste0(here("output/iptds_polygons"), "/", spc, "/", site$site_code, ".rda"))
+    save(ws_vector_clip, file = paste0("output/iptds_polygons", "/", spc, "/", site$site_code, ".rda"))
     st_write(ws_vector_clip, paste0(ws_dir, "watershed_polygons/", spc, "/", site$site_code, ".shp"), quiet = TRUE, append = FALSE)
 
   } # end loop over sites
