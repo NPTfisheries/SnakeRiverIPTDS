@@ -6,8 +6,10 @@
 #   Last Modified: January 13, 2026
 # 
 # Notes: I need to think about how I output the results of the following without overwriting previous stuff, especially when the user fills out
-# which sites are operational each year and which sites to use to produce abundance estimates. In the future, I may do this for individual years
-# after updating ptagis operations and vtt summaries and then append to previous results.
+#   which sites are operational each year and which sites to use to produce abundance estimates. In the future, I may do this for individual years
+#   after updating ptagis operations and vtt summaries and then append to previous results.
+#
+# Consider updating n_tags so that it reflects unique tags in both the site_code and incl_sites columns.
 
 # clear environment
 rm(list = ls())
