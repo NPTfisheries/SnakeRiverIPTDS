@@ -31,7 +31,7 @@ chnk_pops = spsm_pop %>%
   st_transform(default_crs) ; rm(spsm_pop)
 
 # snake river iptds
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260109.rda")
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260116.rda")
 rm(configuration, parent_child, flowlines)
 
 # path to all configuration files used SY2010 - present
@@ -72,9 +72,10 @@ sr_int_sites_sf = sr_site_pops %>%
          sthd_popid,
          chnk_popid) %>%
   filter(site_type == "INT") %>%
-  st_join(crb_sites_sf %>%
-            dplyr::select(rkm),
-          by = "site_code") %>%
+  left_join(crb_sites_sf %>%
+              st_drop_geometry() %>%
+              dplyr::select(site_code, rkm),
+            by = "site_code") %>%
   # filter to ensure the first 3-digit number is 522 and the second 3-digit number is > 173 (LGR)
   filter(str_detect(rkm, "^522\\.")) %>%
   filter(as.numeric(str_extract(rkm, "(?<=^522\\.)(\\d{3})")) > 173) %>%
