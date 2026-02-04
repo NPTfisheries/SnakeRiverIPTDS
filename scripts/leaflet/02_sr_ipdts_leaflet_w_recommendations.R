@@ -15,7 +15,6 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(here)
 library(readxl)
 library(sf)
 library(leaflet)
@@ -25,7 +24,7 @@ library(htmlwidgets)
 # compile data
 
 # maintained iptds metadata
-iptds_sf = read_excel(here("data/Maintained Snake River IPTDS Metadata 20260109.xlsx"),
+iptds_sf = read_excel("data/Maintained Snake River IPTDS Metadata 20260109.xlsx",
                       sheet = "SR_IPTDS_Sites") %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326)
@@ -51,20 +50,20 @@ recommendations_sf = read_excel(here("data/prioritization/iptds_site_recommendat
            crs = 4326)
   
 # populations
-load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
+load("data/spatial/SR_pops.rda") ; rm(fall_pop)
 sthd_pops = sth_pop %>%
   select(TRT_POPID, POP_NAME, MPG) ; rm(sth_pop)
 chnk_pops = spsm_pop %>%
   select(TRT_POPID, POP_NAME, MPG) ; rm(spsm_pop)
 
 # dabom mrr sites
-load(here("data/spatial/dabom_mrr_sites.rda"))
+load("data/spatial/dabom_mrr_sites.rda")
 
 # snake river dam sites
-load(here("data/spatial/sr_dam_sites.rda"))
+load("data/spatial/sr_dam_sites.rda")
 
 # streams and steelhead major/minor spawning areas
-load(here("data/spatial/steelhead_gis_data.rda"))
+load("data/spatial/steelhead_gis_data.rda")
 streams = sthd_critical %>%
   st_transform("EPSG:4326")
 
@@ -72,7 +71,7 @@ sthd_spawn = sthd_spawn %>%
   st_transform("EPSG:4326") ; rm(sthd_critical, sthd_extant, sthd_ip)
 
 # chinook major/minor spawning areas
-chnk_spawn = readRDS(here("data/spatial/spsm_spwn_areas.rds")) %>%
+chnk_spawn = readRDS("data/spatial/spsm_spwn_areas.rds") %>%
   st_transform("EPSG:4326")
 
 # -----------------------
