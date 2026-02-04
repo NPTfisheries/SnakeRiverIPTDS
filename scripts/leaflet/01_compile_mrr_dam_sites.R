@@ -12,7 +12,6 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(here)
 library(sf)
 
 # dabom mrr sites
@@ -51,7 +50,7 @@ sr_dam_sites = configuration %>%
   distinct()
 
 # save dabom mrr sites
-save(mrr_sites, file = here("data/spatial/dabom_mrr_sites.rda"))
-save(sr_dam_sites, file = here("data/spatial/sr_dam_sites.rda"))
+save(mrr_sites, file = "data/spatial/dabom_mrr_sites.rda")
+save(sr_dam_sites, file = "data/spatial/sr_dam_sites.rda")
 
 ### END SCRIPT
