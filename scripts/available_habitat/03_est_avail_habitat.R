@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: January 15, 2025
+#   Last Modified: February 4, 2025
 # 
 # Notes: Consider moving pop_avail_hab section to SnakeRiverFishHabitat and port that object over from there
 

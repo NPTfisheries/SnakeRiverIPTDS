@@ -27,7 +27,7 @@ default_crs = st_crs(32611)               # set default crs: WGS 84, UTM zone 11
 # load and prep data
 
 # snake river iptds
-load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260109.rda")
+load("C:/Git/SnakeRiverFishStatus/data/configuration_files/site_config_LGR_20260116.rda")
 rm(configuration, parent_child, flowlines)
 
 # need these in WGS84, UTM zone 11 for delineation
