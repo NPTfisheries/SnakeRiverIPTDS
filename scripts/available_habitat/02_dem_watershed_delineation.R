@@ -168,6 +168,7 @@ for (spc in c("chnk", "sthd")) {
     if(site$site_code == "VC1")    { loc = c(664480, 4898268) }
     if(site$site_code == "WB1")    { loc = c(554055, 5067449) }
     if(site$site_code == "WH1")    { loc = c(475947, 5029987) }
+    if(site$site_code == "PAHH")   { loc = c(734271, 4952076) }
 
     # if loc != coordinates of pp, update coordinates
     if(any(loc == coordinates(pp)) == FALSE) {
