@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: February 4, 2025
+#   Last Modified: March 6, 2026
 # 
 # Notes: Consider moving pop_avail_hab section to SnakeRiverFishHabitat and port that object over from there
 
@@ -71,7 +71,8 @@ sr_int_sites_sf = sr_site_pops %>%
          site_type,
          sthd_popid,
          chnk_popid) %>%
-  filter(site_type == "INT") %>%
+  #filter(site_type == "INT") %>%
+  filter(site_code != "WALH") %>%
   left_join(crb_sites_sf %>%
               st_drop_geometry() %>%
               dplyr::select(site_code, rkm),

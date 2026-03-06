@@ -4,7 +4,7 @@
 #   More details to come later.
 # 
 # Created: July 22, 2024
-#   Last Modified: January 15, 2026
+#   Last Modified: March 6, 2026
 # 
 # Notes:
 
@@ -44,7 +44,7 @@ chnk_pops = spsm_pop %>%
 # create sf object of dabom sites
 sr_int_site_sf = sr_site_pops %>%
   dplyr::select(site_code, site_type, sthd_popid, chnk_popid) %>%
-  filter(site_type == "INT") %>%
+  #filter(site_type == "INT") %>%
   st_join(
     crb_sites_sf %>% dplyr::select(rkm),
     join = st_intersects
@@ -169,6 +169,7 @@ for (spc in c("chnk", "sthd")) {
     if(site$site_code == "WB1")    { loc = c(554055, 5067449) }
     if(site$site_code == "WH1")    { loc = c(475947, 5029987) }
     if(site$site_code == "PAHH")   { loc = c(734271, 4952076) }
+    if(site$site_code == "SAWT")   { loc = c(669120, 4890790) }
 
     # if loc != coordinates of pp, update coordinates
     if(any(loc == coordinates(pp)) == FALSE) {
