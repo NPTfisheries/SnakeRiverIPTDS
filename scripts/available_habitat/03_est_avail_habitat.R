@@ -4,7 +4,7 @@
 #   including the amount of available habitat above IPTDS.
 # 
 # Created: July 10, 2024
-#   Last Modified: March 6, 2026
+#   Last Modified: July 22, 2026
 # 
 # Notes: Consider moving pop_avail_hab section to SnakeRiverFishHabitat and port that object over from there
 
@@ -89,7 +89,12 @@ sr_int_sites_sf = sr_site_pops %>%
 
 # load the prepped intrinsic potential and redd qrf datasets
 load(file = "../SnakeRiverFishHabitat/output/prepped_snake_ip.rda")
-qrf_sf = get(load(file = "../SnakeRiverFishHabitat/output/prepped_snake_redd_qrf.rda"))
+ip_sf = ip_sf %>%
+  mutate(ip_reach_leng_m = as.numeric(st_length(geometry)))
+
+qrf_sf = get(load(file = "../SnakeRiverFishHabitat/output/prepped_snake_redd_qrf.rda")) %>%
+  rename(geometry = geom) %>%
+  mutate(qrf_reach_id = row_number())
 
 # plot the intrinsic potential data
 ggplot() +
@@ -154,21 +159,23 @@ for (s in 1:nrow(sr_int_sites_sf)) {
   # summarize intrinsic potential habitat for each site polygon
   site_ip = ip_sf %>%
     st_intersection(site_poly) %>%
+    # UPDATE: proprate full-feature IP metrics using the fraction of each original feature retained after clipping
+    mutate(clip_prop = pmin(as.numeric(st_length(geometry)) / ip_reach_leng_m, 1)) %>%
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
         summarise(., 
-                  ip_length_w = sum(length_w_chnk, na.rm = TRUE),
-                  ip_area_w = sum(area_w_chnk, na.rm = TRUE),
-                  ip_length_w_curr = sum(if_else(currchnk > 0, length_w_chnk, 0), na.rm = TRUE),
-                  ip_area_w_curr = sum(if_else(currchnk > 0, area_w_chnk, 0), na.rm = TRUE),
+                  ip_length_w = sum(length_w_chnk * clip_prop, na.rm = TRUE), 
+                  ip_area_w = sum(area_w_chnk * clip_prop, na.rm = TRUE), 
+                  ip_length_w_curr = sum(if_else(currchnk > 0, length_w_chnk * clip_prop, 0), na.rm = TRUE), 
+                  ip_area_w_curr = sum(if_else(currchnk > 0, area_w_chnk * clip_prop, 0), na.rm = TRUE), 
                   .groups = "drop")
       } else if (spc_code == "sthd") {
         summarise(., 
-                  ip_length_w = sum(length_w_sthd, na.rm = TRUE),
-                  ip_area_w = sum(area_w_sthd, na.rm = TRUE),
-                  ip_length_w_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = TRUE),
-                  ip_area_w_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = TRUE),
+                  ip_length_w = sum(length_w_sthd * clip_prop, na.rm = TRUE), 
+                  ip_area_w = sum(area_w_sthd * clip_prop, na.rm = TRUE), 
+                  ip_length_w_curr = sum(if_else(currsthd > 0, length_w_sthd * clip_prop, 0), na.rm = TRUE), 
+                  ip_area_w_curr = sum(if_else(currsthd > 0, area_w_sthd * clip_prop, 0), na.rm = TRUE), 
                   .groups = "drop")
       }
     } %>%
@@ -178,24 +185,26 @@ for (s in 1:nrow(sr_int_sites_sf)) {
   # summarize redd qrf habitat for each site polygon
   site_qrf = qrf_sf %>%
     st_intersection(site_poly) %>%
+    # UPDATE: replace the original full-reach length with clipped length
+    mutate(reach_leng_m = as.numeric(st_length(geometry))) %>%
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
         filter(., chnk == TRUE & chnk_use == "Spawning and rearing") %>%
-        summarise(.,
-                  qrf_length_m = sum(reach_leng_m),
-                  qrf_n = sum(chnk_per_m * reach_leng_m),
-                  #qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
-                  qrf_n_se = sqrt(sum(c(chnk_per_m_se * reach_leng_m)^2)),
-                  .groups = "drop")
+          summarise(.,
+                    qrf_length_m = sum(reach_leng_m),
+                    qrf_n = sum(chnk_per_m * reach_leng_m),
+                    #qrf_n_se = sum(chnk_per_m_se * reach_leng_m),
+                    qrf_n_se = sqrt(sum(c(chnk_per_m_se * reach_leng_m)^2)),
+                    .groups = "drop")
       } else if (spc_code == "sthd") {
         filter(., sthd == TRUE & sthd_use == "Spawning and rearing") %>%
-        summarise(.,
-                  qrf_length_m = sum(reach_leng_m),
-                  qrf_n = sum(sthd_per_m * reach_leng_m),
-                  #qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
-                  qrf_n_se = sqrt(sum(c(sthd_per_m_se * reach_leng_m)^2)),
-                  .groups = "drop")
+          summarise(.,
+                    qrf_length_m = sum(reach_leng_m),
+                    qrf_n = sum(sthd_per_m * reach_leng_m),
+                    #qrf_n_se = sum(sthd_per_m_se * reach_leng_m),
+                    qrf_n_se = sqrt(sum(c(sthd_per_m_se * reach_leng_m)^2)),
+                    .groups = "drop")
       }
     } %>%
     mutate(site_code = site_code,
@@ -272,21 +281,23 @@ for (p in 1:nrow(pop_df)) {
   # summarize intrinsic potential habitat for each population polygon
   pop_ip = ip_sf %>%
     st_intersection(pop_poly) %>%
+    # UPDATE: prorate full-feature IP metrics using the fraction of each original feature retained after clipping.
+    mutate(clip_prop = pmin(as.numeric(st_length(geometry)) / ip_reach_leng_m, 1)) %>%
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
         summarise(.,
-                  ip_length_w = sum(length_w_chnk, na.rm = T),
-                  ip_area_w = sum(area_w_chnk, na.rm = T),
-                  ip_length_w_curr = sum(if_else(currchnk > 0, length_w_chnk, 0), na.rm = T),
-                  ip_area_w_curr = sum(if_else(currchnk > 0, area_w_chnk, 0), na.rm = T),
+                  ip_length_w = sum(length_w_chnk * clip_prop, na.rm = T), 
+                  ip_area_w = sum(area_w_chnk * clip_prop, na.rm = T),
+                  ip_length_w_curr = sum(if_else(currchnk > 0, length_w_chnk * clip_prop, 0), na.rm = T), 
+                  ip_area_w_curr = sum(if_else(currchnk > 0, area_w_chnk * clip_prop, 0), na.rm = T),
                   .groups = "drop")
       } else if (spc_code == "sthd") {
         summarise(.,
-                  ip_length_w = sum(length_w_sthd, na.rm = T),
-                  ip_area_w = sum(area_w_sthd, na.rm = T),
-                  ip_length_w_curr = sum(if_else(currsthd > 0, length_w_sthd, 0), na.rm = T),
-                  ip_area_w_curr = sum(if_else(currsthd > 0, area_w_sthd, 0), na.rm = T),
+                  ip_length_w = sum(length_w_sthd * clip_prop, na.rm = T),
+                  ip_area_w = sum(area_w_sthd * clip_prop, na.rm = T),
+                  ip_length_w_curr = sum(if_else(currsthd > 0, length_w_sthd * clip_prop, 0), na.rm = T),
+                  ip_area_w_curr = sum(if_else(currsthd > 0, area_w_sthd * clip_prop, 0), na.rm = T),
                   .groups = "drop")
       }
     } %>%
@@ -296,6 +307,8 @@ for (p in 1:nrow(pop_df)) {
   # estimate available qrf habitat within trt populations
   pop_qrf = qrf_sf %>%
     st_intersection(pop_poly) %>%
+    # UPDATE: replace the original full-reach length with clipped length
+    mutate(reach_leng_m = as.numeric(st_length(geometry))) %>%
     st_drop_geometry() %>%
     {
       if (spc_code == "chnk") {
@@ -350,16 +363,22 @@ avail_hab_df = site_avail_hab %>%
   mutate(
     p_ip = site_ip_length_w_curr / pop_ip_length_w_curr,
     p_qrf = case_when(
-      site_qrf_n == 0 & pop_qrf_n == 0 ~ 1, # qrf suggests no habitat, so let's not expand 
+      site_qrf_n == 0 & pop_qrf_n == 0 ~ 1, # QRF suggests no habitat, so do not expand
       TRUE ~ site_qrf_n / pop_qrf_n
     ),
-    # standard error of the proportion using the delta method
+    # UPDATE: standard error of p_qrf using the first-order delta method
+    # because site habitat is contained within population habitat, Cov(site_qrf_n, pop_qrf_n) = Var(site_qrf_n).
     p_qrf_se = case_when(
-      p_qrf == 1 ~ 0, # if full population monitoring, let's not propagate further uncertainty into expanded population estimates
+      p_qrf == 1 ~ 0, # Full population monitoring; no habitat uncertainty to propagate
       site_qrf_n_se == 0 & pop_qrf_n_se == 0 ~ 0,
-      TRUE ~ msm::deltamethod( ~ x1 / x2, 
-                              mean = c(site_qrf_n, pop_qrf_n), 
-                              cov = diag(c(site_qrf_n_se, pop_qrf_n_se)^2))
+      TRUE ~ sqrt(
+        pmax(
+          0,
+          site_qrf_n_se^2 / pop_qrf_n^2 +
+            site_qrf_n^2 * pop_qrf_n_se^2 / pop_qrf_n^4 -
+            2 * site_qrf_n * site_qrf_n_se^2 / pop_qrf_n^3
+        )
+      )
     )
   ) %>%
   ungroup() %>%
