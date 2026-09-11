@@ -93,7 +93,6 @@ ip_sf = ip_sf %>%
   mutate(ip_reach_leng_m = as.numeric(st_length(geometry)))
 
 qrf_sf = get(load(file = "../SnakeRiverFishHabitat/output/prepped_snake_redd_qrf.rda")) %>%
-  rename(geometry = geom) %>%
   mutate(qrf_reach_id = row_number())
 
 # plot the intrinsic potential data
